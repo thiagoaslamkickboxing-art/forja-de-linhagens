@@ -2,7 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e1815">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forja">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/icon-192.png">
 <title>Forja de Linhagens</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -50,7 +58,7 @@ body.home #menuBg{display:block}
 /* ---- mapa ---- */
 #home,#game{height:100%;display:none;flex-direction:column}
 body.home #home,body.game #game{display:flex}
-#home{position:relative;z-index:1;overflow-y:auto;padding:0 16px 20px;gap:14px}
+#home{position:relative;z-index:1;overflow-y:auto;padding:env(safe-area-inset-top) calc(16px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));gap:14px}
 .top{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding-top:14px;text-shadow:0 1px 4px #000c}
 .top h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,6vw,32px);line-height:1;color:var(--gold);margin-right:auto;text-wrap:balance;text-shadow:0 2px 8px #000d}
 #home .btn:not(.go){background:rgba(28,48,40,.88);box-shadow:0 2px 6px #0007}
@@ -261,7 +269,7 @@ body.home #home,body.game #game{display:flex}
 
 /* ---- batalha ---- */
 #game{background:#0b0f0d}
-#hud{display:flex;align-items:center;gap:8px;padding:6px 10px;background:linear-gradient(#2a2117,#17120c);border-bottom:2px solid #6b5426;flex:none}
+#hud{display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 6px calc(10px + env(safe-area-inset-left));background:linear-gradient(#2a2117,#17120c);border-bottom:2px solid #6b5426;flex:none}
 .rbtn{flex:none;width:40px;height:40px;border-radius:10px;border:2px solid #6b5426;background:linear-gradient(#3b3326,#221c14);color:var(--parch);font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center}
 #hMid{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;line-height:1.05}
 #hName{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -290,7 +298,7 @@ body.home #home,body.game #game{display:flex}
 #tipc .sub{font-size:11px;color:var(--dim)}
 #tipc .stt{font-size:12px;margin:6px 0;color:var(--parch);line-height:1.35}
 #tipc .btn{width:100%;padding:6px}
-#bar{flex:none;display:flex;align-items:center;gap:10px;padding:8px 10px 10px;background:linear-gradient(#2a2117,#120e09);border-top:2px solid #6b5426}
+#bar{flex:none;display:flex;align-items:center;gap:10px;padding:8px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));background:linear-gradient(#2a2117,#120e09);border-top:2px solid #6b5426}
 .round{flex:none;width:62px;height:62px;border-radius:50%;border:3px solid #6b5426;background:radial-gradient(circle at 50% 35%,#3a3125,#15110b);color:var(--parch);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;font-weight:700;font-size:11px;position:relative}
 .round b{font-size:20px}
 .round em{position:absolute;inset:-3px;border-radius:50%;pointer-events:none}
@@ -344,7 +352,7 @@ body.home #home,body.game #game{display:flex}
 /* ---- folhas ---- */
 .sheet{position:fixed;inset:0;background:#070d0bcc;display:none;align-items:flex-end;justify-content:center;z-index:5}
 .sheet.on{display:flex}
-.panel{background:var(--moss);border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;width:min(560px,100%);max-height:90%;display:flex;flex-direction:column}
+.panel{background:var(--moss);border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;width:min(560px,100%);max-height:90%;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
 .panel header{display:flex;align-items:baseline;gap:10px;padding:14px 16px 8px}
 .panel h2{font-family:var(--display);font-size:26px;color:var(--gold);line-height:1;margin-right:auto}
 .panel .sub{font-size:13px;color:var(--dim);padding:0 16px 8px;line-height:1.3}
@@ -3183,7 +3191,7 @@ function start(data){
 }
 const hot=window.claude&&window.claude.hot;
 if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
-if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){navigator.serviceWorker.register("service-worker.js").then(reg=>{reg.update().catch(()=>{})}).catch(()=>{})}
 </script>
 </body>
 </html>
