@@ -2279,20 +2279,47 @@ function impact(s){
     }
   }
 }
-function findTarget(u,role,range){
-  let best=null;
+function reachCells(unit,col,row){
+  const c0=col==null?unit.col:col,r0=row==null?unit.r:row,y0=uy(r0);
+  const c=C[unit.cls];
+  const role=unit.minion?(unit.mKind==="torreta"?"A":"V"):(c?c.role:"V");
+  const range=unit.minion?unit.mRange:safeEntry(ROLE,c&&c.role,"ROLE",ROLE.V).rng;
+  const bands=[];
   if(role==="V"){
-    const t4=!u.minion&&C[u.cls]&&C[u.cls].tier>=4;
+    const t4=!unit.minion&&!!(c&&c.tier>=4);
     const rng=t4?2.5:range;
-    for(const e of G.enemies)if(!e.dead&&(!e.fly||t4)&&e.col===u.col&&e.y<u.y&&u.y-e.y<=rng&&(!best||e.y>best.y))best=e;
-    if(best||!t4)return best;
-    for(const e of G.enemies)if(!e.dead&&Math.abs(e.col-u.col)===1&&e.y<u.y&&u.y-e.y<=2.2&&(!best||e.y>best.y))best=e;
-    return best;
+    bands.push({col:c0,yMin:y0-rng,yMax:y0,strictMin:false,strictMax:true,hitsFly:t4,prio:0});
+    if(t4){
+      if(c0>0)bands.push({col:c0-1,yMin:y0-2.2,yMax:y0,strictMin:false,strictMax:true,hitsFly:true,prio:1});
+      if(c0<LANES-1)bands.push({col:c0+1,yMin:y0-2.2,yMax:y0,strictMin:false,strictMax:true,hitsFly:true,prio:1});
+    }
+    return bands;
   }
-  const ok=e=>!e.dead&&e.y>-0.35&&Math.abs(u.y-e.y)<=range;
-  for(const e of G.enemies)if(e.col===u.col&&ok(e)&&(!best||e.y>best.y))best=e;
+  const rawMin=y0-range,strictMin=rawMin<=-0.35,yMin=strictMin?-0.35:rawMin,yMax=y0+range;
+  bands.push({col:c0,yMin,yMax,strictMin,strictMax:false,hitsFly:true,prio:0});
+  if(c0>0)bands.push({col:c0-1,yMin,yMax,strictMin,strictMax:false,hitsFly:true,prio:1});
+  if(c0<LANES-1)bands.push({col:c0+1,yMin,yMax,strictMin,strictMax:false,hitsFly:true,prio:1});
+  return bands;
+}
+function enemyInReach(band,e){
+  if(e.dead||e.col!==band.col)return false;
+  if(e.fly&&!band.hitsFly)return false;
+  if(band.strictMin?!(e.y>band.yMin):!(e.y>=band.yMin))return false;
+  if(band.strictMax?!(e.y<band.yMax):!(e.y<=band.yMax))return false;
+  return true;
+}
+function findTarget(u){
+  const bands=reachCells(u,u.col,u.r);
+  let best=null;
+  for(const b of bands){
+    if(b.prio!==0)continue;
+    for(const e of G.enemies)if(enemyInReach(b,e)&&(!best||e.y>best.y))best=e;
+  }
   if(best)return best;
-  for(const e of G.enemies)if(Math.abs(e.col-u.col)===1&&ok(e)&&(!best||e.y>best.y))best=e;
+  for(const b of bands){
+    if(b.prio!==1)continue;
+    for(const e of G.enemies)if(enemyInReach(b,e)&&(!best||e.y>best.y))best=e;
+  }
   return best;
 }
 function step(dt){
@@ -2437,7 +2464,7 @@ function step(dt){
     if(!u.minion&&c.id==="lanterna"){if(!G.inWave)u.lp=6;else{u.lp=(u.lp==null?6:u.lp)-dt;if(u.lp<=0){u.lp=(ab&&ab.pulseCd)||6;const d=st(u).dmg;G.arcs.push({ring:1,x:u.x,y:u.y,r:2,t:0.45,h:280});puff(u.x,u.y,8,"#c06bd9",1.4,0.45,0.05);sfx("dark");for(const e of G.enemies)if(!e.dead&&Math.hypot(e.x-u.x,e.y-u.y)<=2){e.markT=Math.max(e.markT,((ab&&ab.markDur)||4)*durMult());applySchoolMark(e,"S",d,u);status(e,{weaken:um.weaken||2,burn:1},d,"S",u);G.floats.push({x:e.x,y:e.y-0.5,t:0.8,txt:"MARCA!",col:"#ff9ee0"})}}}}
     if(u.stun>0){u.stun-=dt;continue}
     u.cd-=dt;if(u.cd>0)continue;
-    const s=st(u),uRole=u.minion?(u.mKind==="torreta"?"A":"V"):c.role,tg=findTarget(u,uRole,s.range);
+    const s=st(u),uRole=u.minion?(u.mKind==="torreta"?"A":"V"):c.role,tg=findTarget(u);
     if(tg){u.cd=1/s.rate;u.atk=0.3;u.atkN=(u.atkN||0)+1;u.face=tg.col>u.col?1:tg.col<u.col?-1:u.face;const ss=u.minion?(u.mKind==="torreta"?{form:"magic",el:"bolt"}:{form:"slash",el:u.mKind==="esqueleto"?"dark":"plain"}):(c.shot||(c.shot=shotStyle(c)));
       sfx(ss.form==="arrow"?"arrow":ss.form==="slash"?"slash":ss.el);
       const isSup=!u.minion&&u.rar==="S";
@@ -3337,10 +3364,19 @@ function drawUnit(u,x,y,ghost){
   if(u.hp<u.mhp&&!ghost){const bw=cw*0.6,bx=x-bw/2,by=y-fh*0.78;rr(bx-1,by-1,bw+2,6,3);ctx.fillStyle="#000b";ctx.fill();rr(bx,by,bw*Math.max(0,u.hp/u.mhp),4,2);ctx.fillStyle=u.hp/u.mhp>0.5?"#7bd957":u.hp/u.mhp>0.25?"#f2c14e":"#e0604a";ctx.fill()}
   ctx.globalAlpha=1;
 }
-function drawEnemy(e,now){
+function drawEnemy(e,now,reachCol){
   const s=sc(e.y),x=SX(e.x,e.y),y=SY(e.y),p=e.lk.split(","),sz=fh*1.18*e.sz*s;
   const feet=y+fh*0.32*s,moving=e.y<e.lim-0.01&&e.stunT<=0,bob=moving?Math.abs(Math.sin(e.walk))*sz*0.05:0,tilt=moving?Math.sin(e.walk)*0.08:0,lunge=e.fight>0?Math.sin(e.fight/0.25*Math.PI)*fh*0.15*s:0,k=e.hitT>0?1.1:1;
   ctx.beginPath();ctx.ellipse(x,feet+(e.fly?fh*0.25*s:0),sz*0.26,sz*0.07,0,0,7);ctx.fillStyle="#0007";ctx.fill();
+  if(reachCol){
+    const flyOff=e.fly?fh*0.25*s:0;
+    ctx.save();
+    ctx.fillStyle=reachCol;ctx.globalAlpha=RANGE_STYLE.enemyFillAlpha;
+    ctx.beginPath();ctx.ellipse(x,feet-sz*0.44-flyOff,sz*0.34,sz*0.46,0,0,7);ctx.fill();
+    ctx.strokeStyle=reachCol;ctx.globalAlpha=RANGE_STYLE.enemyStrokeAlpha;ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.ellipse(x,feet-sz*0.44-flyOff,sz*0.34,sz*0.46,0,0,7);ctx.stroke();
+    ctx.restore();
+  }
   if(e.slowT>0){ctx.fillStyle="#bfeaff66";ctx.beginPath();ctx.ellipse(x,feet,sz*0.32,sz*0.1,0,0,7);ctx.fill()}
   if(e.shatter>0){ctx.strokeStyle="#9eeeff";ctx.lineWidth=2.2;ctx.beginPath();ctx.ellipse(x,feet,sz*0.38,sz*0.13,0,0,7);ctx.stroke()}
   if(e.eclipseT>0){ctx.strokeStyle="#e8a8ff";ctx.lineWidth=2.4;ctx.beginPath();ctx.ellipse(x,feet,sz*0.4,sz*0.14,0,0,7);ctx.stroke()}
@@ -3415,6 +3451,180 @@ function drawShot(s){
 const P2=(x,y)=>[SX(x,y),SY(y)];
 function cellOf(px,py){if(py<eH||py>=eH+FROWS*fh)return null;const c=Math.floor(px/cw),r=Math.floor((py-eH)/fh);if(c<0||c>=LANES||r<0||r>=FROWS)return null;return[c,r]}
 const cellC=(c,r)=>[c*cw+cw/2,eH+r*fh+fh/2];
+// Estilo editável do indicador de alcance (cores e opacidades)
+const RANGE_STYLE={
+  fillAlpha:0.16,        // preenchimento da faixa principal (cor da escola)
+  adjFillAlpha:0.11,     // preenchimento das colunas adjacentes
+  strokeAlpha:0.74,      // contorno tracejado da faixa de alcance
+  dash:[7,5],            // padrão do tracejado [traço, espaço]
+  dashSpeed:24,          // velocidade da animação do tracejado (px/s; desligada em Efeitos = Baixo)
+  lineWidth:1.8,         // espessura do contorno tracejado
+  enemyFillAlpha:0.14,   // halo leve nos inimigos dentro do alcance
+  enemyStrokeAlpha:0.85, // contorno leve nos inimigos dentro do alcance
+  auraColor:"#63e68a",   // SUP: cor verde das casas atingidas pela AURA
+  auraFillAlpha:0.22,
+  auraStrokeAlpha:0.85,
+  trapColor:"#ffb84d",   // ARM: cor das casas onde pode plantar armadilhas
+  trapFillAlpha:0.20,
+  trapStrokeAlpha:0.86,
+  summonColor:"#6ee7ff", // INV: cor da casa onde o lacaio pode surgir
+  summonFillAlpha:0.22,
+  summonStrokeAlpha:0.88
+};
+function auraCells(unit,col,row){
+  if(unit.minion)return[];
+  const c=C[unit.cls],ab=ABIL[unit.cls],out=[];
+  if(ab&&(ab.globalDmg||ab.globalSpd||ab.globalDr||ab.globalHeal)){
+    for(let r=0;r<FROWS;r++)for(let l=0;l<LANES;l++)if(!(G.blocked&&G.blocked.has(l)))out.push([l,r]);
+    return out;
+  }
+  if(ab&&(ab.auraSpd||ab.auraDmg||ab.auraDr||ab.auraSlow||ab.auraHeal)){
+    for(const[dc,dr]of[[-1,0],[1,0],[0,-1],[0,1]]){
+      const nc=col+dc,nr=row+dr;
+      if(nc>=0&&nc<LANES&&nr>=0&&nr<FROWS&&!(G.blocked&&G.blocked.has(nc)))out.push([nc,nr]);
+    }
+    return out;
+  }
+  if(c&&(c.role==="SUPP"||(c.fxm&&c.fxm.buff))){
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      if(!dc&&!dr)continue;
+      const nc=col+dc,nr=row+dr;
+      if(nc>=0&&nc<LANES&&nr>=0&&nr<FROWS&&!(G.blocked&&G.blocked.has(nc)))out.push([nc,nr]);
+    }
+  }
+  return out;
+}
+function trapSpots(unit,col){
+  if(unit.minion)return[];
+  const ab=ABIL[unit.cls];if(!ab||!ab.trap)return[];
+  const max=ab.trapMax||2,out=[];
+  for(let i=0;i<max;i++)out.push({col,y:EROWS-0.95-i*1.55,kind:ab.trap});
+  return out;
+}
+function summonCells(unit,col,row,pv){
+  if(unit.minion)return[];
+  const ab=ABIL[unit.cls];if(!ab||!ab.minion)return[];
+  const free=[];
+  for(let r=0;r<FROWS;r++)for(let l=0;l<LANES;l++){
+    if(G.blocked&&G.blocked.has(l))continue;
+    if(l===col&&r===row)continue;
+    const occ=unitAt(l,r);
+    if(occ){
+      if(pv.mode==="move"&&occ===pv.src){}
+      else if(pv.mode==="fuse"&&(occ===pv.src||(occ.minion&&(occ.owner===pv.src||occ.owner===pv.target)))){}
+      else continue;
+    }
+    free.push([l,r]);
+  }
+  if(!free.length)return[];
+  free.sort((a,b)=>(Math.abs(a[0]-col)+Math.abs(a[1]-row))-(Math.abs(b[0]-col)+Math.abs(b[1]-row)));
+  const minD=Math.abs(free[0][0]-col)+Math.abs(free[0][1]-row);
+  return free.filter(p=>Math.abs(p[0]-col)+Math.abs(p[1]-row)===minD);
+}
+function activeReachPreview(){
+  if(!G||G.over)return null;
+  let pv=null;
+  if(drag&&drag.moved&&G.units.includes(drag.u)){
+    const cc=cellOf(drag.px,drag.py);
+    if(cc&&!(G.blocked&&G.blocked.has(cc[0]))){
+      const t=unitAt(cc[0],cc[1]);
+      if(t&&t!==drag.u){
+        if(t.minion)pv={unit:drag.u,col:drag.u.col,row:drag.u.r,mode:"drag",src:drag.u,target:null};
+        else{
+          const fz=fusionOf(drag.u,t);
+          if(!fz.err&&fz.id)pv={unit:{cls:fz.id,col:cc[0],r:cc[1],minion:false},col:cc[0],row:cc[1],mode:"fuse",src:drag.u,target:t};
+          else pv={unit:drag.u,col:cc[0],row:cc[1],mode:"swap",src:drag.u,target:t};
+        }
+      }else pv={unit:drag.u,col:cc[0],row:cc[1],mode:"move",src:drag.u,target:null};
+    }else pv={unit:drag.u,col:drag.u.col,row:drag.u.r,mode:"drag",src:drag.u,target:null};
+  }else if(sel&&G.units.includes(sel)){
+    pv={unit:sel,col:sel.col,row:sel.r,mode:"sel",src:sel,target:null};
+  }
+  if(!pv)return null;
+  const c=C[pv.unit.cls];
+  pv.colHex=(c&&SCH[c.s])?SCH[c.s].c:"#ffe9a3";
+  pv.bands=reachCells(pv.unit,pv.col,pv.row);
+  return pv;
+}
+function traceBandPath(col,yA,yB,hw){
+  const ys=[yA],step=0.5;
+  if(yA<EROWS){
+    const endE=Math.min(EROWS,yB);
+    for(let y=Math.floor(yA/step+1)*step;y<endE-1e-4;y+=step)ys.push(y);
+    if(yB>EROWS)ys.push(EROWS);
+  }
+  if(yB>yA+1e-4)ys.push(yB);
+  ctx.beginPath();
+  for(let i=0;i<ys.length;i++){const y=ys[i],X=SX(col-hw,y),Y=SY(y);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y)}
+  for(let i=ys.length-1;i>=0;i--){const y=ys[i];ctx.lineTo(SX(col+hw,y),SY(y))}
+  ctx.closePath();
+}
+function drawReachOverlay(pv,now){
+  if(!pv)return;
+  const animDash=FXQ!==FXQ_CFG.baixo&&RANGE_STYLE.dashSpeed>0;
+  const dashOff=animDash?-now*RANGE_STYLE.dashSpeed:0;
+  ctx.save();
+  // 1) Faixas de alcance no campo (cor da escola + tracejado animado)
+  for(const b of pv.bands){
+    const yA=Math.max(0,b.yMin),yB=Math.min(WALLY,b.yMax);
+    if(yB<=yA+0.02)continue;
+    traceBandPath(b.col,yA,yB,0.44);
+    ctx.fillStyle=pv.colHex;
+    ctx.globalAlpha=b.prio===0?RANGE_STYLE.fillAlpha:RANGE_STYLE.adjFillAlpha;
+    ctx.fill();
+    ctx.strokeStyle=pv.colHex;
+    ctx.globalAlpha=b.prio===0?RANGE_STYLE.strokeAlpha:RANGE_STYLE.strokeAlpha*0.78;
+    ctx.lineWidth=RANGE_STYLE.lineWidth;
+    ctx.setLineDash(RANGE_STYLE.dash);
+    ctx.lineDashOffset=dashOff;
+    ctx.stroke();
+  }
+  // 2) Extra SUP: casas atingidas pela AURA (verde)
+  const aCells=auraCells(pv.unit,pv.col,pv.row);
+  let auraSet=null;
+  if(aCells.length){
+    auraSet=new Set();
+    for(const[ac,ar]of aCells){
+      auraSet.add(ac+","+ar);
+      const[cx2,cy2]=cellC(ac,ar);
+      rr(cx2-cw/2+4,cy2-fh/2+4,cw-8,fh-8,8);
+      ctx.fillStyle=RANGE_STYLE.auraColor;ctx.globalAlpha=RANGE_STYLE.auraFillAlpha;ctx.fill();
+      ctx.strokeStyle=RANGE_STYLE.auraColor;ctx.globalAlpha=RANGE_STYLE.auraStrokeAlpha;ctx.lineWidth=2;
+      ctx.setLineDash(RANGE_STYLE.dash);ctx.lineDashOffset=dashOff;ctx.stroke();
+    }
+  }
+  // 3) Extra ARM: casas onde pode plantar armadilhas
+  const tSpots=trapSpots(pv.unit,pv.col);
+  if(tSpots.length){
+    for(const ts of tSpots){
+      const yA=Math.max(0,ts.y-0.46),yB=Math.min(EROWS,ts.y+0.46);
+      traceBandPath(ts.col,yA,yB,0.38);
+      ctx.fillStyle=RANGE_STYLE.trapColor;ctx.globalAlpha=RANGE_STYLE.trapFillAlpha;ctx.fill();
+      ctx.strokeStyle=RANGE_STYLE.trapColor;ctx.globalAlpha=RANGE_STYLE.trapStrokeAlpha;ctx.lineWidth=1.8;
+      ctx.setLineDash(RANGE_STYLE.dash);ctx.lineDashOffset=dashOff;ctx.stroke();
+      const[tx,ty]=P2(ts.col,ts.y),r=Math.max(10,cw*0.2*sc(ts.y));
+      ctx.setLineDash([]);ctx.globalAlpha=0.85;ctx.fillStyle=RANGE_STYLE.trapColor;
+      ctx.font=`700 ${r}px "Alegreya Sans",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText(ts.kind==="mina_gelo"?"❄":ts.kind==="poca"?"☣":ts.kind==="runa"?"⚡":"▲",tx,ty);
+    }
+    ctx.textBaseline="alphabetic";
+  }
+  // 4) Extra INV: casa(s) onde o lacaio pode surgir
+  const sCells=summonCells(pv.unit,pv.col,pv.row,pv);
+  if(sCells.length){
+    for(let i=0;i<sCells.length;i++){
+      const[sc2,sr2]=sCells[i],[cx2,cy2]=cellC(sc2,sr2);
+      const pad=auraSet&&auraSet.has(sc2+","+sr2)?7:4;
+      const kAlpha=i===0?1:0.55;
+      rr(cx2-cw/2+pad,cy2-fh/2+pad,cw-pad*2,fh-pad*2,8);
+      ctx.fillStyle=RANGE_STYLE.summonColor;ctx.globalAlpha=RANGE_STYLE.summonFillAlpha*kAlpha;ctx.fill();
+      ctx.strokeStyle=RANGE_STYLE.summonColor;ctx.globalAlpha=RANGE_STYLE.summonStrokeAlpha*kAlpha;ctx.lineWidth=2;
+      ctx.setLineDash(RANGE_STYLE.dash);ctx.lineDashOffset=dashOff;ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
 function draw(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   if(G.godFx){
@@ -3450,12 +3660,14 @@ function draw(){
     if(G.next.pat!=="linha"){ctx.font=`700 ${Math.max(12,fh*0.19)}px "Alegreya Sans",sans-serif`;ctx.textAlign="center";const t="Próxima: "+PATN[G.next.pat];ctx.lineWidth=4;ctx.strokeStyle="#000c";ctx.strokeText(t,W/2,SY(1.5));ctx.fillStyle="#ffd24a";ctx.fillText(t,W/2,SY(1.5))}
   }
   const moving=drag&&drag.moved;
-  if(moving){for(const u of G.units){if(u===drag.u)continue;const ok=!fusionOf(drag.u,u).err,[x,y]=cellC(u.col,u.r);rr(x-cw/2+3,y-fh/2+3,cw-6,fh-6,8);ctx.lineWidth=2;ctx.strokeStyle=ok?"#e4b548":"#ffffff40";ctx.setLineDash(ok?[6,4]:[]);ctx.lineDashOffset=-now*14;ctx.stroke();ctx.setLineDash([])}}
+  const reachPv=activeReachPreview();
+  if(reachPv)drawReachOverlay(reachPv,now);
+  if(moving){for(const u of G.units){if(u===drag.u)continue;const ok=!fusionOf(drag.u,u).err,[x,y]=cellC(u.col,u.r);rr(x-cw/2+3,y-fh/2+3,cw-6,fh-6,8);ctx.lineWidth=2;ctx.strokeStyle=ok?"#e4b548":"#ffffff40";ctx.setLineDash(ok?[6,4]:[]);ctx.lineDashOffset=FXQ===FXQ_CFG.baixo?0:-now*14;ctx.stroke();ctx.setLineDash([])}}
   if(sel&&G.units.includes(sel)&&!moving){const[x,y]=cellC(sel.col,sel.r);rr(x-cw/2+2,y-fh/2+2,cw-4,fh-4,9);ctx.lineWidth=2.5;ctx.strokeStyle="#ffe9a3";ctx.stroke()}
   // entidades por profundidade
   const all=[];for(const e of G.enemies)all.push([e.y,e,0]);for(const u of G.units)if(!(moving&&drag.u===u))all.push([u.y,u,1]);
   all.sort((a,b)=>a[0]-b[0]);
-  for(const it of all){if(it[2]){const[x,y]=cellC(it[1].col,it[1].r);drawUnit(it[1],x,y)}else drawEnemy(it[1],now)}
+  for(const it of all){if(it[2]){const[x,y]=cellC(it[1].col,it[1].r);drawUnit(it[1],x,y)}else{const e=it[1],inR=reachPv&&reachPv.bands.some(b=>enemyInReach(b,e));drawEnemy(e,now,inR?reachPv.colHex:null)}}
   if(G.mFade&&G.mFade.length){
     for(const mf of G.mFade){
       const al=Math.max(0,mf.t/mf.max),[fx,fy]=P2(mf.x,mf.y),mim=MIMG[mf.kind];
