@@ -1,5 +1,5 @@
 ﻿// Aumente o numero da versao ao publicar uma nova atualizacao do jogo
-const CACHE_VERSION = "forja-de-linhagens-v5";
+const CACHE_VERSION = "forja-de-linhagens-v6";
 const VIDEO_CACHE = "forja-de-linhagens-videos-v1";
 
 const CORE_ASSETS = [
