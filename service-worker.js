@@ -1,5 +1,6 @@
 ﻿// Aumente o numero da versao ao publicar uma nova atualizacao do jogo
-const CACHE_VERSION = "forja-de-linhagens-v3";
+const CACHE_VERSION = "forja-de-linhagens-v5";
+const VIDEO_CACHE = "forja-de-linhagens-videos-v1";
 
 const CORE_ASSETS = [
   "./",
@@ -8,6 +9,52 @@ const CORE_ASSETS = [
 ];
 
 const IMG_ASSETS = [
+  "./img/fx/fx_adaga.png",
+  "./img/fx/fx_alma_abismo.png",
+  "./img/fx/fx_alma_chama.png",
+  "./img/fx/fx_alma_gelo.png",
+  "./img/fx/fx_alma_natureza.png",
+  "./img/fx/fx_alma_sol.png",
+  "./img/fx/fx_alma_tempestade.png",
+  "./img/fx/fx_arm_espinhos.png",
+  "./img/fx/fx_arm_lava.png",
+  "./img/fx/fx_arm_mina_gelo.png",
+  "./img/fx/fx_arm_poca.png",
+  "./img/fx/fx_arm_praga.png",
+  "./img/fx/fx_arm_runa.png",
+  "./img/fx/fx_flecha.png",
+  "./img/fx/fx_imp_fogo.png",
+  "./img/fx/fx_imp_gelo.png",
+  "./img/fx/fx_imp_luz.png",
+  "./img/fx/fx_imp_natureza.png",
+  "./img/fx/fx_imp_raio.png",
+  "./img/fx/fx_imp_sombra.png",
+  "./img/fx/fx_lanca.png",
+  "./img/fx/fx_meteoro.png",
+  "./img/fx/fx_onda_divina.png",
+  "./img/fx/fx_pedra.png",
+  "./img/fx/fx_pilar_divino.png",
+  "./img/fx/fx_proj_fogo.png",
+  "./img/fx/fx_proj_gelo.png",
+  "./img/fx/fx_proj_luz.png",
+  "./img/fx/fx_proj_natureza.png",
+  "./img/fx/fx_proj_raio.png",
+  "./img/fx/fx_proj_sombra.png",
+  "./img/fx/fx_re_critico.png",
+  "./img/fx/fx_re_eclipse.png",
+  "./img/fx/fx_re_estilhacar.png",
+  "./img/fx/fx_re_praga.png",
+  "./img/fx/fx_re_prisao.png",
+  "./img/fx/fx_re_vapor.png",
+  "./img/fx/fx_st_burn.png",
+  "./img/fx/fx_st_frost.png",
+  "./img/fx/fx_st_lumen.png",
+  "./img/fx/fx_st_mark.png",
+  "./img/fx/fx_st_poison.png",
+  "./img/fx/fx_st_slow.png",
+  "./img/fx/fx_st_stun.png",
+  "./img/fx/fx_st_umbra.png",
+  "./img/fx/fx_st_weaken.png",
   "./img/abismo.png",
   "./img/abismo_C.png",
   "./img/abismo_E.png",
@@ -361,7 +408,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION && k !== VIDEO_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -371,6 +418,17 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+
+  // Videos dos Deuses: nunca pre-carregados nem gravados automaticamente no fetch;
+  // usa VIDEO_CACHE apenas se ja tiver sido assistido e salvo pela pagina
+  if (url.pathname.includes("/videos/")) {
+    event.respondWith(
+      caches.open(VIDEO_CACHE).then(cache =>
+        cache.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req))
+      )
+    );
+    return;
+  }
 
   // Navegacao / index.html / manifest: rede primeiro (atualiza cache), fallback para cache offline
   if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/manifest.webmanifest")) {
