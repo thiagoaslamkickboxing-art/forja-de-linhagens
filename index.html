@@ -234,23 +234,74 @@ body.home #home,body.game #game{display:flex}
 #hToast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--parch);color:#1b1a12;padding:7px 14px;border-radius:6px;font-weight:700;font-size:14px;box-shadow:0 6px 20px #000a;opacity:0;pointer-events:none;transition:opacity .2s;z-index:8;text-align:center;max-width:calc(100% - 32px)}
 #hToast.on{opacity:1}
 @keyframes buyPop{0%{transform:scale(1)}35%{transform:scale(1.05);box-shadow:0 0 16px #e4b54899}100%{transform:scale(1)}}
-.secT{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between}
-#deck{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.slot{aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;background:var(--moss);display:flex;align-items:center;justify-content:center;color:var(--line);font-size:20px;overflow:hidden;padding:0}
-.slot.full{border-style:solid;border-width:2px}
-.slot canvas{width:100%!important;height:100%!important}
-#coll{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
-.hc{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 7px;background:var(--moss);border:1px solid var(--line);border-top:3px solid var(--line);border-radius:4px}
-.hc .nm{font-size:12px;line-height:1.1;text-align:center;font-weight:700;min-height:2.2em;display:flex;align-items:center}
-.hc .rr{font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-.hc .pb{width:86%;height:6px;border-radius:3px;background:#0a120f;overflow:hidden}
+.secT{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between;align-items:center;gap:6px}
+.dkTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dkTab{padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--moss);color:var(--dim);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:4px;overflow:hidden}
+.dkTab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dkTab small{font-size:10px;opacity:.8;flex:none}
+.dkTab[aria-selected="true"]{background:linear-gradient(#345242,#21382d);border-color:var(--gold);color:var(--gold)}
+.dkBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dkName{flex:1;min-width:110px;background:#0c1713;border:1px solid var(--line);border-radius:4px;color:var(--parch);padding:5px 8px;font-size:13px;font-weight:700}
+.dkName:focus{outline:none;border-color:var(--gold)}
+.btn.sm{padding:5px 9px;font-size:12px;min-height:30px}
+.btn.warn{border-color:#a8483a;color:#ffb4a8}
+.dkSwap{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;background:#3a2b10;border:1px solid var(--gold);border-radius:5px;font-size:12px;color:#fff2c6}
+.dkSwap[hidden]{display:none}
+.autoBar{display:flex;gap:6px;flex-wrap:wrap;padding:7px 8px;background:rgba(16,30,24,.92);border:1px solid var(--gold);border-radius:5px}
+.autoBar[hidden]{display:none}
+.autoBar .btn{flex:1;min-width:110px;font-size:12px;padding:6px 8px}
+#deck{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;touch-action:none}
+.slot{position:relative;aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;background:var(--moss);display:flex;align-items:center;justify-content:center;color:var(--line);font-size:20px;overflow:hidden;padding:0;user-select:none;-webkit-user-select:none;transition:transform .12s,box-shadow .12s}
+.slot.full{border-style:solid;border-width:2px;cursor:grab}
+.slot.full:active{cursor:grabbing}
+.slot.swapPick{animation:swapPulse 1s infinite;border-color:var(--gold)!important}
+.slot.dragging{opacity:.45;transform:scale(.92)}
+.slot.dropOver{box-shadow:0 0 0 2px var(--gold);transform:scale(1.06)}
+.slot .sLv{position:absolute;bottom:2px;right:2px;font-size:9px;font-weight:700;background:#0a120fdd;color:var(--parch);padding:0 3px;border-radius:2px;pointer-events:none}
+.slot .sSch{position:absolute;top:2px;left:2px;width:7px;height:7px;border-radius:50%;border:1px solid #000a;pointer-events:none}
+.slot canvas{width:100%!important;height:100%!important;pointer-events:none}
+@keyframes swapPulse{0%,100%{box-shadow:0 0 0 1px #e4b54866}50%{box-shadow:0 0 10px 2px #e4b548cc}}
+#deckAnalysis{background:rgba(16,30,24,.88);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.daRow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.daLbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:66px;font-weight:700}
+.daChip{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;background:#0c1713;border:1px solid var(--line);font-size:11px;font-weight:700;color:var(--parch)}
+.daChip.act{background:#1b3326;box-shadow:0 0 6px #0006}
+.daChip.dim{opacity:.55}
+.daChip.warn{background:#341816;border-color:#c95a49;color:#ffb4a8}
+.daChip.ok{background:#16301f;border-color:#5bb874;color:#9ef0b2}
+.daBtn{cursor:pointer;background:#192e25;border-color:var(--gold);color:#ffe9a3}
+.daFuses{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px;padding-top:4px;border-top:1px solid var(--line);max-height:170px;overflow-y:auto}
+.daFuses[hidden]{display:none}
+.daFItem{display:flex;align-items:center;gap:5px;padding:3px 5px;background:#0c1713;border:1px solid var(--line);border-left:3px solid var(--line);border-radius:4px;font-size:11px}
+.daFItem .fn{font-weight:700;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.daFItem .fm{font-size:9px;color:var(--dim)}
+.colTools{display:flex;flex-direction:column;gap:6px}
+.colSearchRow{display:flex;gap:6px;align-items:center}
+.colSearch{flex:1;background:#0c1713;border:1px solid var(--line);border-radius:4px;color:var(--parch);padding:6px 9px;font-size:13px}
+.colSearch:focus{outline:none;border-color:var(--gold)}
+.colFilters{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.colFilters select{background:#0c1713;border:1px solid var(--line);border-radius:4px;color:var(--parch);padding:5px 4px;font-size:11px;min-width:0}
+.colFilters select:focus{outline:none;border-color:var(--gold)}
+@media (max-width:480px){.colFilters{grid-template-columns:repeat(3,1fr)}}
+#coll{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:8px}
+.hc{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:18px 4px 7px;background:var(--moss);border:1px solid var(--line);border-top:3px solid var(--line);border-radius:4px;text-align:center}
+.hc.inDk{box-shadow:inset 0 0 0 1px #e4b54866}
+.hc .nm{font-size:12px;line-height:1.1;text-align:center;font-weight:700;min-height:2.1em;display:flex;align-items:center;justify-content:center}
+.hc .rr{font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.hc .metaRow{display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap;margin:1px 0}
+.hc .mBadge{font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;background:#0a120fdd;border:1px solid var(--line);line-height:1.15}
+.hc .linRow{display:flex;gap:2px;justify-content:center;min-height:14px}
+.hc .linIco{font-size:10px;line-height:1;padding:1px 3px;border-radius:3px;background:#0a120fdd;border:1px solid var(--line);font-weight:700}
+.hc .pb{width:88%;height:6px;border-radius:3px;background:#0a120f;overflow:hidden;margin-top:2px}
 .hc .pb i{display:block;height:100%;background:var(--gold)}
 .hc .pb.ok i{background:#7bd957}
-.hc .ct{font-size:11px;color:var(--dim)}
-.hc .dk{position:absolute;top:4px;right:4px;font-size:9px;letter-spacing:.08em;background:var(--gold);color:#1b1a12;border-radius:2px;padding:0 4px;font-weight:700}
-.hc .abIco{position:absolute;top:4px;left:4px;display:flex;gap:2px;pointer-events:none}
-.hc .abIco span{font-size:10px;line-height:1;padding:1px 3px;border-radius:3px;background:#0a120fdd;border:1px solid var(--line);font-weight:700}
+.hc .ct{font-size:10px;color:var(--dim)}
+.hc .dk{position:absolute;top:4px;left:4px;font-size:9px;letter-spacing:.06em;background:var(--gold);color:#1b1a12;border-radius:2px;padding:0 4px;font-weight:700}
+.hc .hInfo{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:#0c1713ee;color:var(--parch);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.hc .hInfo.up{border-color:#7bd957;color:#7bd957;box-shadow:0 0 6px #7bd95766}
 .hc.lock{opacity:.55}
+.preDkTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px}
+.preDkTabs .dkTab{padding:4px 6px;font-size:11px}
 .ch{display:flex;gap:12px;align-items:center;background:var(--moss);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
 .ch .tx{flex:1;min-width:0}
 .ch .nm{font-family:var(--display);font-size:20px;line-height:1.1}
@@ -523,8 +574,41 @@ body.home #home,body.game #game{display:flex}
   </div>
   <div id="tabH">
     <button class="btn" id="hGrim">Abrir grimório de fusões</button>
-    <div class="secT"><span>Deck de batalha</span><span id="deckN"></span></div><div id="deck"></div>
-    <div class="secT"><span>Coleção</span><span id="collN"></span></div><div id="coll"></div>
+    <div class="secT"><span>Decks salvos</span><span id="deckN"></span></div>
+    <div class="dkTabs" id="dkTabs"></div>
+    <div class="dkBar">
+      <input class="dkName" id="dkName" type="text" maxlength="20" aria-label="Nome do deck" placeholder="Nome do deck">
+      <button class="btn sm" id="bAutoDeck">⚡ Deck automático</button>
+      <button class="btn sm warn" id="bClearDeck">Limpar</button>
+    </div>
+    <div class="autoBar" id="autoBar" hidden>
+      <button class="btn sm" data-auto="strong">⚔ Mais forte</button>
+      <button class="btn sm" data-auto="grim">📖 Caçar versões</button>
+      <button class="btn sm" data-auto="lin">✧ Sinergia de linhagem</button>
+    </div>
+    <div class="dkSwap" id="dkSwap" hidden><span id="dkSwapTxt"></span><button class="btn sm" id="dkSwapCancel">Cancelar</button></div>
+    <div id="deck"></div>
+    <div id="deckAnalysis"></div>
+    <div class="secT"><span>Coleção</span><span id="collN"></span></div>
+    <div class="colTools">
+      <div class="colSearchRow">
+        <input class="colSearch" id="hSearch" type="search" placeholder="Buscar herói por nome..." aria-label="Buscar herói por nome">
+        <button class="btn sm" id="hFilterReset" hidden>Limpar filtros</button>
+      </div>
+      <div class="colFilters">
+        <select id="fSch" aria-label="Filtrar por escola"></select>
+        <select id="fRar" aria-label="Filtrar por raridade"></select>
+        <select id="fRole" aria-label="Filtrar por papel"></select>
+        <select id="fLin" aria-label="Filtrar por linhagem"></select>
+        <select id="fSort" aria-label="Ordenar coleção">
+          <option value="lv">Ordem: Nível</option>
+          <option value="rar">Ordem: Raridade</option>
+          <option value="sch">Ordem: Escola</option>
+          <option value="pow">Ordem: Poder</option>
+        </select>
+      </div>
+    </div>
+    <div id="coll"></div>
   </div>
   <div id="tabB"><div id="chests" style="display:flex;flex-direction:column;gap:8px"></div></div>
   <div id="tabL">
@@ -659,8 +743,9 @@ body.home #home,body.game #game{display:flex}
     <div class="pObjs" id="preObjs"></div>
     <div class="secT"><span>Recompensas</span></div>
     <div class="pRew" id="preRew"></div>
-    <div class="secT"><span>Deck atual</span><span id="preSch"></span></div>
-    <div class="pDeckRow"><div class="pDeck" id="preDeck"></div><button class="btn" id="preEdit">Trocar deck</button></div>
+    <div class="secT"><span>Deck ativo</span><span id="preSch"></span></div>
+    <div class="preDkTabs" id="preDeckTabs"></div>
+    <div class="pDeckRow"><div class="pDeck" id="preDeck"></div><button class="btn" id="preEdit">Editar deck</button></div>
     <div class="pWarn" id="preWarn" hidden></div>
   </div>
   <div class="pAct"><button class="btn go" id="prePlay">JOGAR</button></div>
@@ -1237,7 +1322,7 @@ function normSpec(spec){
 
 /* ================= progresso ================= */
 const LS="forja-progresso-v2";
-let P={xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",sfxVol:1}};
+let P={xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],decks:[{name:"Deck 1",cards:[]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}],activeDeck:0,chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",sfxVol:1}};
 let docRef=null,saving=false,dirty=false;
 function mergeP(s){
   if(!s||typeof s!=="object")return;
@@ -1273,6 +1358,21 @@ function mergeP(s){
   for(const k in (s.heroes||{}))if(C[k]&&C[k].tier===1){const h=s.heroes[k]||{},o=P.heroes[k]||{lv:1,cards:0};P.heroes[k]={lv:Math.max(o.lv,Math.min(10,Math.floor(Number(h.lv)||1))),cards:Math.max(o.cards,Math.floor(Number(h.cards)||0))}}
   for(const k of CHEST_ORD)P.chests[k]=Math.max(P.chests[k]||0,Math.floor(Number((s.chests||{})[k])||0));
   if(Array.isArray(s.deck)&&s.deck.length)P.deck=s.deck.map(String);
+  if(Array.isArray(s.decks)){
+    P.decks=[0,1,2].map(i=>{
+      const d=s.decks[i];
+      if(d&&typeof d==="object"){
+        const nm=String(d.name||("Deck "+(i+1))).trim().slice(0,20)||("Deck "+(i+1));
+        const cards=Array.isArray(d.cards)?d.cards.map(String):[];
+        return{name:nm,cards};
+      }
+      return{name:"Deck "+(i+1),cards:[]};
+    });
+    if(s.activeDeck!=null){const ad=Math.floor(Number(s.activeDeck));if(ad>=0&&ad<=2)P.activeDeck=ad}
+  }else if(Array.isArray(s.deck)&&s.deck.length){
+    P.decks[0]={name:(P.decks[0]&&P.decks[0].name)||"Deck 1",cards:s.deck.map(String)};
+    P.activeDeck=0;
+  }
   if(s.tut)P.tut=1;P.pity=Math.max(P.pity,Math.floor(Number(s.pity)||0));
   P.pityL=Math.max(P.pityL||0,Math.min(FUSION_PITY_MAX,Math.max(0,Math.floor(Number(s.pityL)||0))));
   for(const k in (s.bestRar||{}))if(C[k]&&RAR[s.bestRar[k]])updateBestRar(k,s.bestRar[k]);
@@ -1400,10 +1500,33 @@ function syncBestRar(){
     if(!any&&P.found[id])updateBestRar(id,"C");
   }
 }
+function syncActiveDeck(){
+  if(!Array.isArray(P.decks)||P.decks.length!==3){
+    const old=Array.isArray(P.deck)?[...P.deck]:[];
+    P.decks=[{name:"Deck 1",cards:old},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}];
+  }
+  P.activeDeck=(P.activeDeck>=0&&P.activeDeck<=2)?P.activeDeck:0;
+  for(let i=0;i<3;i++){
+    if(!P.decks[i]||typeof P.decks[i]!=="object")P.decks[i]={name:"Deck "+(i+1),cards:[]};
+    P.decks[i].name=String(P.decks[i].name||("Deck "+(i+1))).trim().slice(0,20)||("Deck "+(i+1));
+    P.decks[i].cards=[...new Set(Array.isArray(P.decks[i].cards)?P.decks[i].cards:[])].filter(id=>P.heroes[id]&&C[id]&&C[id].tier===1).slice(0,6);
+  }
+  P.deck=P.decks[P.activeDeck].cards;
+}
+function setActiveDeck(idx){
+  P.activeDeck=Math.max(0,Math.min(2,idx));
+  syncActiveDeck();
+}
 function ensureStart(){
   if(!Object.keys(P.heroes).length){for(const id of["piro","crio","druida","ladino"])P.heroes[id]={lv:1,cards:0};P.deck=["piro","crio","druida","ladino"];P.chests.p=Math.max(P.chests.p,1)}
-  P.deck=[...new Set(P.deck)].filter(id=>P.heroes[id]&&C[id]&&C[id].tier===1).slice(0,6);
-  if(!P.deck.length)P.deck=Object.keys(P.heroes).slice(0,6);
+  if(!Array.isArray(P.decks)||P.decks.length!==3){
+    P.decks=[{name:"Deck 1",cards:[...(P.deck||[])]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}];
+    P.activeDeck=0;
+  }else if(!P.decks[0].cards.length&&P.deck&&P.deck.length&&!P.decks[1].cards.length&&!P.decks[2].cards.length){
+    P.decks[0].cards=[...P.deck];
+  }
+  syncActiveDeck();
+  if(!P.deck.length){P.decks[P.activeDeck].cards=Object.keys(P.heroes).slice(0,6);syncActiveDeck()}
   syncBestRar();
 }
 const cardsNeed=id=>{const h=P.heroes[id];return h.lv>=10?0:Math.max(1,Math.ceil(UPC[h.lv-1]*RAR[C[id].rar].k))};
@@ -4037,30 +4160,436 @@ function setTab(t){
   if(t==="D")renderChallenges();
 }
 document.querySelectorAll(".tabs button[data-t]").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+let pendingSwap=null,showFuses=false,hFiltersInit=false;
+const hFilters={q:"",sch:"",rar:"",role:"",lin:"",sort:"lv"};
+const normTxt=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const heroPower=id=>{const c=C[id],R=safeEntry(ROLE,c&&c.role,"ROLE",ROLE.V);return heroPw(id)*c.dmg*R.dmg*c.rate};
+function heroHasAoE(id){
+  const c=C[id],ab=ABIL[id];
+  if(!c)return false;
+  if(c.fxm&&c.fxm.chain)return true;
+  if(ab&&(ab.rad||ab.targets||ab.trap||ab.echoEvery))return true;
+  return id==="tempestade"||id==="druida"||id==="lanceira"||id==="piro"||id==="crio";
+}
+function normRoleFilter(id){const r=heroTRole(id);return r==="SUPP"?"SUP":r}
+function initHeroControls(){
+  if(hFiltersInit)return;
+  hFiltersInit=true;
+  const fSch=$("fSch"),fRar=$("fRar"),fRole=$("fRole"),fLin=$("fLin"),fSort=$("fSort"),hSearch=$("hSearch");
+  const addOpt=(sel,v,t)=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o)};
+  addOpt(fSch,"","Escola: Todas");
+  for(const k in SCH)addOpt(fSch,k,SCH[k].n);
+  addOpt(fRar,"","Raridade: Todas");
+  for(const k of["C","R","E","L"])addOpt(fRar,k,RAR[k].n);
+  addOpt(fRole,"","Papel: Todos");
+  for(const[k,n]of[["V","Vanguarda"],["A","Atirador"],["M","Mago"],["SUP","Suporte"],["ARM","Armadilheiro"],["INV","Invocador"],["CAT","Catalisador"]])addOpt(fRole,k,n);
+  addOpt(fLin,"","Linhagem: Todas");
+  for(const k of LINEAGE_ORD)addOpt(fLin,k,LINEAGE_META[k].ico+" "+LINEAGE_META[k].n);
+  fSch.onchange=()=>{hFilters.sch=fSch.value;renderHeroes()};
+  fRar.onchange=()=>{hFilters.rar=fRar.value;renderHeroes()};
+  fRole.onchange=()=>{hFilters.role=fRole.value;renderHeroes()};
+  fLin.onchange=()=>{hFilters.lin=fLin.value;renderHeroes()};
+  fSort.onchange=()=>{hFilters.sort=fSort.value;renderHeroes()};
+  hSearch.oninput=()=>{hFilters.q=hSearch.value;renderHeroes()};
+  $("hFilterReset").onclick=()=>{
+    hFilters.q="";hFilters.sch="";hFilters.rar="";hFilters.role="";hFilters.lin="";hFilters.sort="lv";
+    hSearch.value="";fSch.value="";fRar.value="";fRole.value="";fLin.value="";fSort.value="lv";
+    renderHeroes();
+  };
+  const dkName=$("dkName");
+  dkName.oninput=()=>{
+    const d=P.decks[P.activeDeck];if(!d)return;
+    d.name=dkName.value.slice(0,20)||("Deck "+(P.activeDeck+1));
+    const tab=$("dkTabs").children[P.activeDeck];
+    if(tab&&tab.firstElementChild)tab.firstElementChild.textContent=d.name;
+    persist();
+  };
+  dkName.onblur=()=>{
+    const d=P.decks[P.activeDeck];if(!d)return;
+    d.name=dkName.value.trim().slice(0,20)||("Deck "+(P.activeDeck+1));
+    dkName.value=d.name;persist();renderHeroes();
+  };
+  dkName.onkeydown=e=>{if(e.key==="Enter")dkName.blur()};
+  $("bClearDeck").onclick=()=>{
+    pendingSwap=null;
+    P.decks[P.activeDeck].cards.length=0;
+    syncActiveDeck();persist();sfx("no");hToast("Deck limpo");renderHeroes();
+  };
+  $("dkSwapCancel").onclick=()=>{pendingSwap=null;renderHeroes()};
+  $("bAutoDeck").onclick=()=>{
+    const ab=$("autoBar");ab.hidden=!ab.hidden;
+  };
+  document.querySelectorAll("#autoBar button[data-auto]").forEach(b=>{
+    b.onclick=()=>{
+      $("autoBar").hidden=true;
+      buildAutoDeck(b.dataset.auto);
+    };
+  });
+}
+function buildAutoDeck(mode){
+  const owned=BASES.filter(id=>P.heroes[id]);
+  if(!owned.length){sfx("no");hToast("Nenhum herói disponível");return}
+  let pick=[],label="";
+  if(mode==="strong"){
+    const byPow=[...owned].sort((a,b)=>heroPower(b)-heroPower(a));
+    const add=id=>{if(id&&!pick.includes(id)&&pick.length<6)pick.push(id)};
+    add(byPow.find(id=>normRoleFilter(id)==="V"));
+    add(byPow.find(id=>C[id].role!=="V"));
+    add(byPow.find(id=>heroHasAoE(id)));
+    add(byPow.find(id=>normRoleFilter(id)==="SUP"));
+    for(const id of byPow)add(id);
+    label="Mais forte";
+  }else if(mode==="grim"){
+    const missingMap=new Map();
+    for(const idA of owned)for(const idB of owned){
+      const key=[C[idA].s,C[idB].s].sort().join(""),fid=RES[2][key];
+      if(!fid)continue;
+      const probs=fusionProbs(C[idA].rar,C[idB].rar),f=P.foundR[fid]||{};
+      const miss=[];
+      for(let i=0;i<5;i++)if(probs[i]>0&&!f[RAR_ORD[i]])miss.push(fid+":"+RAR_ORD[i]+":"+(probs[i]+(!P.found[fid]?40:0)));
+      if(miss.length)missingMap.set(idA+"|"+idB,miss);
+    }
+    const covered=new Set();
+    const scoreWith=cand=>{
+      let sc=0;
+      const tmp=[...pick,cand];
+      const seen=new Set();
+      for(const a of tmp){
+        for(const b of[cand]){
+          const m1=missingMap.get(a+"|"+b)||[];
+          for(const item of m1){
+            const[fid,r,w]=item.split(":"),k=fid+":"+r;
+            if(!covered.has(k)&&!seen.has(k)){seen.add(k);sc+=Number(w)}
+          }
+        }
+      }
+      return sc*100+heroPower(cand)*0.01;
+    };
+    while(pick.length<Math.min(6,owned.length)){
+      let best=null,bv=-1;
+      for(const id of owned){
+        if(pick.includes(id))continue;
+        const v=scoreWith(id);
+        if(v>bv){bv=v;best=id}
+      }
+      if(!best)break;
+      pick.push(best);
+      for(const a of pick){
+        for(const item of(missingMap.get(a+"|"+best)||[])){
+          const[fid,r]=item.split(":");covered.add(fid+":"+r);
+        }
+      }
+    }
+    label="Caçar versões do Grimório ("+covered.size+" alvos)";
+  }else{
+    // Sinergia de linhagem
+    const evalDeck=arr=>{
+      const cnt={};
+      for(const id of arr)for(const tg of heroTags(id))cnt[tg]=(cnt[tg]||0)+1;
+      let sc=0;
+      for(const tg of LINEAGE_ORD){
+        const n=cnt[tg]||0;
+        if(n>=4)sc+=420;else if(n>=3)sc+=220;else if(n>=2)sc+=95;
+      }
+      for(const id of arr)sc+=heroPower(id)*0.05;
+      return sc;
+    };
+    let bestArr=null,bestSc=-1,bestTag="";
+    const byPow=[...owned].sort((a,b)=>heroPower(b)-heroPower(a));
+    for(const tg of LINEAGE_ORD){
+      const arr=[];
+      for(const id of byPow)if(heroTags(id).includes(tg)&&arr.length<4)arr.push(id);
+      while(arr.length<Math.min(6,owned.length)){
+        let nxt=null,nv=-1;
+        for(const id of byPow){
+          if(arr.includes(id))continue;
+          const v=evalDeck([...arr,id]);
+          if(v>nv){nv=v;nxt=id}
+        }
+        if(!nxt)break;
+        arr.push(nxt);
+      }
+      const sc=evalDeck(arr);
+      if(sc>bestSc){bestSc=sc;bestArr=arr;bestTag=LINEAGE_META[tg].n}
+    }
+    pick=bestArr||byPow.slice(0,6);
+    label="Sinergia de linhagem ("+bestTag+")";
+  }
+  pendingSwap=null;
+  P.decks[P.activeDeck].cards=[...pick];
+  syncActiveDeck();persist();sfx("discover");
+  hToast("Deck automático: "+label);
+  renderHeroes();
+}
+function renderDeckAnalysis(){
+  const box=$("deckAnalysis");if(!box)return;
+  box.textContent="";
+  const dk=P.deck;
+  // 1) Escolas + Fusões Nv 2
+  const schCnt={};
+  for(const id of dk){const s=C[id].s;schCnt[s]=(schCnt[s]||0)+1}
+  const schKeys=Object.keys(schCnt);
+  const fuseIds=[];
+  const fuseSeen=new Set();
+  for(let i=0;i<schKeys.length;i++)for(let j=i;j<schKeys.length;j++){
+    const k=[schKeys[i],schKeys[j]].sort().join(""),fid=RES[2][k];
+    if(fid&&!fuseSeen.has(fid)){fuseSeen.add(fid);fuseIds.push(fid)}
+  }
+  const rSch=document.createElement("div");rSch.className="daRow";
+  const lSch=document.createElement("span");lSch.className="daLbl";lSch.textContent="Escolas";rSch.appendChild(lSch);
+  if(schKeys.length){
+    for(const s of schKeys){
+      const sp=document.createElement("span");sp.className="daChip";sp.style.borderColor=SCH[s].c;sp.style.color=SCH[s].c;
+      sp.textContent=SCH[s].n+" ×"+schCnt[s];rSch.appendChild(sp);
+    }
+  }else{
+    const sp=document.createElement("span");sp.className="daChip dim";sp.textContent="Nenhuma";rSch.appendChild(sp);
+  }
+  const fBtn=document.createElement("button");fBtn.className="daChip daBtn";
+  fBtn.textContent="Fusões possíveis: "+fuseIds.length+"/21 "+(showFuses?"▾":"▸");
+  fBtn.onclick=()=>{showFuses=!showFuses;renderDeckAnalysis()};
+  rSch.appendChild(fBtn);
+  box.appendChild(rSch);
+
+  const fList=document.createElement("div");fList.className="daFuses";fList.hidden=!showFuses;
+  if(showFuses){
+    if(!fuseIds.length){
+      const emp=document.createElement("span");emp.className="daChip dim";emp.textContent="Adicione cartas ao deck para ver as fusões de nível 2.";fList.appendChild(emp);
+    }else{
+      for(const fid of fuseIds){
+        const fc=C[fid],it=document.createElement("div");it.className="daFItem";it.style.borderLeftColor=SCH[fc.s].c;
+        const cntV=P.foundR[fid]?RAR_ORD.filter(r=>P.foundR[fid][r]).length:0;
+        const tx=document.createElement("div");tx.style.minWidth="0";
+        const fn=document.createElement("div");fn.className="fn";fn.textContent=fc.n;
+        const fm=document.createElement("div");fm.className="fm";fm.textContent=SCH[fc.s].n+" · "+cntV+"/5 ver.";
+        tx.append(fn,fm);
+        it.append(icon(fc,24,!P.found[fid]),tx);
+        fList.appendChild(it);
+      }
+    }
+  }
+  box.appendChild(fList);
+
+  // 2) Linhagens
+  const linCnt={};
+  for(const id of dk)for(const tg of heroTags(id))linCnt[tg]=(linCnt[tg]||0)+1;
+  const rLin=document.createElement("div");rLin.className="daRow";
+  const lLin=document.createElement("span");lLin.className="daLbl";lLin.textContent="Linhagens";rLin.appendChild(lLin);
+  const activeLins=LINEAGE_ORD.filter(tg=>linCnt[tg]>0).sort((a,b)=>(linCnt[b]||0)-(linCnt[a]||0));
+  if(activeLins.length){
+    for(const tg of activeLins){
+      const n=linCnt[tg],m=LINEAGE_META[tg],tier=n>=4?4:n>=3?3:n>=2?2:0;
+      const sp=document.createElement("span");sp.className="daChip"+(tier?" act":" dim");
+      if(tier){sp.style.borderColor=m.c;sp.style.color=m.c}
+      sp.textContent=m.ico+" "+m.n+" "+n+(tier?" ("+tier+"/4)":"/2");
+      sp.title=m.d;
+      rLin.appendChild(sp);
+    }
+  }else{
+    const sp=document.createElement("span");sp.className="daChip dim";sp.textContent="—";rLin.appendChild(sp);
+  }
+  box.appendChild(rLin);
+
+  // 3) Chance de Lendário (FUSION_SAME / FUSION_SUM via fusionProbs)
+  const rLeg=document.createElement("div");rLeg.className="daRow";
+  const lLeg=document.createElement("span");lLeg.className="daLbl";lLeg.textContent="Lendário";rLeg.appendChild(lLeg);
+  let bestLeg=-1,bestSup=0,bestPair="";
+  for(let i=0;i<dk.length;i++)for(let j=i;j<dk.length;j++){
+    const ra=C[dk[i]].rar,rb=C[dk[j]].rar,pr=fusionProbs(ra,rb),lp=pr[3]+pr[4];
+    if(lp>bestLeg){bestLeg=lp;bestSup=pr[4];bestPair=ra+"+"+rb}
+  }
+  const spLeg=document.createElement("span");spLeg.className="daChip";
+  if(bestLeg>=0){
+    spLeg.style.borderColor="#ffb83d";spLeg.style.color="#ffe27a";
+    spLeg.textContent="Máx. "+bestLeg+"%"+(bestSup>0?" (incl. "+bestSup+"% Supremo)":"")+" · par "+bestPair;
+  }else{
+    spLeg.className="daChip dim";spLeg.textContent="—";
+  }
+  rLeg.appendChild(spLeg);
+  box.appendChild(rLeg);
+
+  // 4) Avisos
+  const warns=[];
+  if(!dk.length)warns.push("Deck vazio");
+  else{
+    if(dk.length<6)warns.push("Incompleto ("+dk.length+"/6)");
+    if(schKeys.length===1)warns.push("Só uma escola");
+    if(!dk.some(id=>normRoleFilter(id)==="SUP"))warns.push("Sem suporte");
+    if(!dk.some(id=>normRoleFilter(id)==="V"))warns.push("Sem vanguarda");
+    if(!dk.some(id=>heroHasAoE(id)))warns.push("Sem dano em área");
+    if(dk.every(id=>C[id].role==="V"))warns.push("Sem antiaéreo");
+  }
+  const rW=document.createElement("div");rW.className="daRow";
+  const lW=document.createElement("span");lW.className="daLbl";lW.textContent="Avisos";rW.appendChild(lW);
+  if(warns.length){
+    for(const w of warns){const sp=document.createElement("span");sp.className="daChip warn";sp.textContent="⚠ "+w;rW.appendChild(sp)}
+  }else{
+    const sp=document.createElement("span");sp.className="daChip ok";sp.textContent="✓ Deck equilibrado";rW.appendChild(sp);
+  }
+  box.appendChild(rW);
+}
 function renderHeroes(){
+  initHeroControls();
+  syncActiveDeck();
+  const curD=P.decks[P.activeDeck];
   $("deckN").textContent=P.deck.length+"/6";
+  // Abas dos 3 decks salvos
+  const tabs=$("dkTabs");tabs.textContent="";
+  for(let i=0;i<3;i++){
+    const d=P.decks[i],b=document.createElement("button");b.className="dkTab";
+    b.setAttribute("aria-selected",i===P.activeDeck);
+    const sp=document.createElement("span");sp.textContent=d.name;
+    const sm=document.createElement("small");sm.textContent=d.cards.length+"/6";
+    b.append(sp,sm);
+    b.onclick=()=>{if(P.activeDeck===i)return;pendingSwap=null;setActiveDeck(i);persist();sfx("summon");renderHeroes()};
+    tabs.appendChild(b);
+  }
+  const dkName=$("dkName");
+  if(document.activeElement!==dkName)dkName.value=curD.name;
+  // Aviso de troca quando deck está cheio
+  const sw=$("dkSwap");
+  if(pendingSwap&&C[pendingSwap]){
+    sw.hidden=false;
+    $("dkSwapTxt").textContent="Toque em uma carta do deck para trocar por "+C[pendingSwap].n;
+  }else{pendingSwap=null;sw.hidden=true}
+  // 6 espaços do deck (tocar remove ou troca; arrastar reordena)
   const dk=$("deck");dk.textContent="";
-  for(let i=0;i<6;i++){const id=P.deck[i],b=document.createElement("button");b.className="slot"+(id?" full":"");
-    if(id){b.style.borderColor=RAR[C[id].rar].c;b.appendChild(icon(C[id],60));b.setAttribute("aria-label",C[id].n);b.onclick=()=>openHero(id)}else{b.textContent="+";b.setAttribute("aria-label","Espaço vazio");b.disabled=true}
-    dk.appendChild(b)}
-  const own=BASES.filter(id=>P.heroes[id]).length;$("collN").textContent=own+"/"+BASES.length;
+  for(let i=0;i<6;i++){
+    const id=P.deck[i],b=document.createElement("button");
+    b.className="slot"+(id?" full":"")+(id&&pendingSwap?" swapPick":"");
+    b.dataset.idx=String(i);
+    if(id){
+      const c=C[id],h=P.heroes[id];
+      b.style.borderColor=RAR[c.rar].c;
+      b.appendChild(icon(c,60));
+      const dot=document.createElement("span");dot.className="sSch";dot.style.background=SCH[c.s].c;b.appendChild(dot);
+      if(h){const lv=document.createElement("span");lv.className="sLv";lv.textContent="Nv "+h.lv;b.appendChild(lv)}
+      b.setAttribute("aria-label",c.n+" (toque para remover ou arraste para reordenar)");
+      b.onpointerdown=e=>{
+        if(e.button>0)return;
+        const sx=e.clientX,sy=e.clientY;let moved=false,overIdx=i;
+        try{b.setPointerCapture(e.pointerId)}catch(err){}
+        const slots=()=>[...dk.querySelectorAll(".slot")];
+        const move=ev=>{
+          if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>8){moved=true;b.classList.add("dragging")}
+          if(!moved)return;
+          overIdx=i;
+          for(const sl of slots()){
+            const r=sl.getBoundingClientRect();
+            const hit=ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom;
+            const si=Number(sl.dataset.idx);
+            sl.classList.toggle("dropOver",hit&&si!==i&&si<P.deck.length);
+            if(hit&&si<P.deck.length)overIdx=si;
+          }
+        };
+        const end=()=>{
+          b.removeEventListener("pointermove",move);
+          b.removeEventListener("pointerup",end);
+          b.removeEventListener("pointercancel",end);
+          b.classList.remove("dragging");
+          for(const sl of slots())sl.classList.remove("dropOver");
+          if(moved){
+            if(overIdx!==i&&overIdx>=0&&overIdx<P.deck.length){
+              const[mv]=P.deck.splice(i,1);
+              P.deck.splice(overIdx,0,mv);
+              syncActiveDeck();persist();sfx("summon");renderHeroes();
+            }
+          }else{
+            if(pendingSwap){
+              P.deck[i]=pendingSwap;
+              pendingSwap=null;
+              syncActiveDeck();persist();sfx("summon");renderHeroes();
+            }else{
+              P.deck.splice(i,1);
+              syncActiveDeck();persist();sfx("no");renderHeroes();
+            }
+          }
+        };
+        b.addEventListener("pointermove",move);
+        b.addEventListener("pointerup",end);
+        b.addEventListener("pointercancel",end);
+      };
+    }else{
+      b.textContent="+";b.setAttribute("aria-label","Espaço vazio");b.disabled=true;
+    }
+    dk.appendChild(b);
+  }
+  renderDeckAnalysis();
+  // Coleção com busca, filtros e ordenação
+  const ownTotal=BASES.filter(id=>P.heroes[id]).length;
+  const qNorm=normTxt(hFilters.q.trim());
+  const hasFilter=!!(qNorm||hFilters.sch||hFilters.rar||hFilters.role||hFilters.lin||hFilters.sort!=="lv");
+  $("hFilterReset").hidden=!hasFilter;
+  let list=BASES.filter(id=>{
+    const c=C[id],h=P.heroes[id];
+    if(hFilters.sch&&c.s!==hFilters.sch)return false;
+    if(hFilters.rar&&c.rar!==hFilters.rar)return false;
+    if(hFilters.role&&normRoleFilter(id)!==hFilters.role)return false;
+    if(hFilters.lin&&!heroTags(id).includes(hFilters.lin))return false;
+    if(qNorm&&!normTxt(h?c.n:"").includes(qNorm))return false;
+    return true;
+  });
+  const rIdx=id=>RAR_ORD.indexOf(C[id].rar);
+  list.sort((a,b)=>{
+    const oa=P.heroes[a]?1:0,ob=P.heroes[b]?1:0;
+    if(ob!==oa)return ob-oa;
+    if(hFilters.sort==="lv"){
+      const la=(P.heroes[a]||{}).lv||0,lb=(P.heroes[b]||{}).lv||0;
+      return (lb-la)||(((P.heroes[b]||{}).cards||0)-((P.heroes[a]||{}).cards||0))||(rIdx(b)-rIdx(a));
+    }
+    if(hFilters.sort==="rar")return (rIdx(b)-rIdx(a))||(((P.heroes[b]||{}).lv||0)-((P.heroes[a]||{}).lv||0));
+    if(hFilters.sort==="sch")return C[a].s.localeCompare(C[b].s)||(rIdx(b)-rIdx(a));
+    if(hFilters.sort==="pow")return heroPower(b)-heroPower(a);
+    return 0;
+  });
+  $("collN").textContent=(list.length!==BASES.length?list.length+" filtrados · ":"")+ownTotal+"/"+BASES.length;
   const co=$("coll");co.textContent="";
-  const ord=[...BASES].sort((a,b)=>(P.heroes[b]?1:0)-(P.heroes[a]?1:0)||"CREL".indexOf(C[b].rar)-"CREL".indexOf(C[a].rar));
-  for(const id of ord){const c=C[id],h=P.heroes[id],r=RAR[c.rar],b=document.createElement("button");b.className="hc"+(h?"":" lock");b.style.borderTopColor=r.c;
+  for(const id of list){
+    const c=C[id],h=P.heroes[id],r=RAR[c.rar],si=SCH[c.s],tr=safeEntry(TROLE,heroTRole(id),"TROLE",{n:"?",c:"#fff"});
+    const inDk=P.deck.includes(id);
+    const b=document.createElement("button");
+    b.className="hc"+(h?"":" lock")+(inDk?" inDk":"");
+    b.style.borderTopColor=r.c;
     const nm=document.createElement("div");nm.className="nm";nm.textContent=h?c.n:"???";
     const rr2=document.createElement("div");rr2.className="rr";rr2.style.color=r.c;rr2.textContent=r.n+(h?" · Nv "+h.lv:"");
-    b.append(icon(c,64,!h),nm,rr2);
-    if(h){const need=cardsNeed(id),pb=document.createElement("div");pb.className="pb"+(need&&h.cards>=need?" ok":"");const i=document.createElement("i");i.style.width=(need?Math.min(100,h.cards/need*100):100)+"%";pb.appendChild(i);
-      const ct=document.createElement("div");ct.className="ct";ct.textContent=need?h.cards+"/"+need+" cartas":"Nível máximo";b.append(pb,ct);
-      if(P.deck.includes(id)){const d=document.createElement("div");d.className="dk";d.textContent="DECK";b.appendChild(d)}}
-    else{const ct=document.createElement("div");ct.className="ct";ct.textContent="Em baús";b.appendChild(ct)}
-    const ab=ABIL[id];
-    if(ab){
-      const ic=document.createElement("div");ic.className="abIco";
-      for(const tk of ab.trigs){const sp=document.createElement("span");sp.textContent=TRIG[tk].ico;sp.style.color=TRIG[tk].c;sp.title=TRIG[tk].n+": "+ab.desc;ic.appendChild(sp)}
-      b.appendChild(ic);
+    const meta=document.createElement("div");meta.className="metaRow";
+    const mSch=document.createElement("span");mSch.className="mBadge";mSch.style.borderColor=si.c;mSch.style.color=si.c;mSch.textContent=si.n;
+    const mRol=document.createElement("span");mRol.className="mBadge";mRol.style.borderColor=tr.c;mRol.style.color=tr.c;mRol.textContent=tr.n;
+    meta.append(mSch,mRol);
+    const lRow=document.createElement("div");lRow.className="linRow";
+    for(const ltg of heroTags(id)){
+      const lm=LINEAGE_META[ltg];if(!lm)continue;
+      const sp=document.createElement("span");sp.className="linIco";sp.textContent=lm.ico;sp.style.color=lm.c;sp.style.borderColor=lm.c+"88";sp.title=lm.n;
+      lRow.appendChild(sp);
     }
-    b.onclick=()=>openHero(id);co.appendChild(b)}
+    b.append(icon(c,60,!h),nm,rr2,meta,lRow);
+    if(h){
+      const need=cardsNeed(id),price=h.lv<10?UPG[h.lv-1]:0,canUp=!!(need&&h.cards>=need&&P.coins>=price);
+      const pb=document.createElement("div");pb.className="pb"+(need&&h.cards>=need?" ok":"");
+      const bar=document.createElement("i");bar.style.width=(need?Math.min(100,h.cards/need*100):100)+"%";pb.appendChild(bar);
+      const ct=document.createElement("div");ct.className="ct";ct.textContent=need?h.cards+"/"+need+" cartas":"Nível máximo";
+      b.append(pb,ct);
+      if(inDk){const d=document.createElement("div");d.className="dk";d.textContent="DECK";b.appendChild(d)}
+      const info=document.createElement("span");info.className="hInfo"+(canUp?" up":"");info.textContent=canUp?"⬆":"i";
+      info.title=canUp?"Pronto para evoluir!":"Detalhes e evolução";
+      info.onclick=e=>{e.stopPropagation();openHero(id)};
+      b.appendChild(info);
+    }else{
+      const ct=document.createElement("div");ct.className="ct";ct.textContent="Em baús";b.appendChild(ct);
+    }
+    b.onclick=()=>{
+      if(!h){openHero(id);return}
+      if(inDk){openHero(id);return}
+      if(P.deck.length<6){
+        P.deck.push(id);pendingSwap=null;
+        syncActiveDeck();persist();sfx("summon");renderHeroes();
+      }else{
+        pendingSwap=id;sfx("summon");renderHeroes();
+        $("dkSwap").scrollIntoView({behavior:"smooth",block:"nearest"});
+      }
+    };
+    co.appendChild(b);
+  }
 }
 function openHero(id){
   try{
@@ -4083,8 +4612,8 @@ function openHero(id){
       $("heroProg").textContent=need?"Cartas: "+h.cards+"/"+need+". Cada nível soma +12% de dano e de vida, e as fusões herdam a média dos dois pais.":"Nível máximo alcançado.";
       up.textContent=need?"Evoluir · "+price+" moedas":"Nível máximo";up.disabled=!need||h.cards<need||P.coins<price;
       up.onclick=()=>{if(up.disabled)return;h.cards-=need;P.coins-=price;h.lv++;track("upgrades");persist();sfx("discover");renderHome();openHero(id)};
-      dk.textContent=inDeck?"Tirar do deck":P.deck.length>=6?"Deck cheio (6)":"Pôr no deck";dk.disabled=(!inDeck&&P.deck.length>=6)||(inDeck&&P.deck.length<=1);
-      dk.onclick=()=>{if(dk.disabled)return;if(inDeck)P.deck=P.deck.filter(x=>x!==id);else P.deck.push(id);persist();sfx("summon");renderHome();openHero(id)};
+      dk.textContent=inDeck?"Tirar do deck":P.deck.length>=6?"Deck cheio (6)":"Pôr no deck";dk.disabled=(!inDeck&&P.deck.length>=6);
+      dk.onclick=()=>{if(dk.disabled)return;if(inDeck)P.decks[P.activeDeck].cards=P.deck.filter(x=>x!==id);else P.decks[P.activeDeck].cards.push(id);syncActiveDeck();persist();sfx("summon");renderHome();openHero(id)};
     }else $("heroProg").textContent="";
     $("hero").classList.add("on");
   }catch(err){warnOnce("openHero:"+(err&&err.message||err),"Erro em openHero: "+err)}
@@ -4585,19 +5114,36 @@ function openPre(r,s,hard){
   if(prevSt<3)addRew("3★: +5 gemas","#c07bff");
   if(ph.type==="boss"&&!P.bosses[ph.th])addRew("1ª vez chefe: +15 gemas","#c07bff");
   if(hard)addRew("Vitória Difícil: +1 gema","#ff7a5c");
-  const dk=$("preDeck");dk.textContent="";
-  for(let i=0;i<6;i++){
-    const id=P.deck[i],sl=document.createElement("div");sl.className="pSlot";
-    if(id){sl.style.borderColor=SCH[C[id].s].c;sl.appendChild(icon(C[id],36))}
-    dk.appendChild(sl);
-  }
-  const nSch=deckSchools();
-  $("preSch").textContent=nSch+(nSch===1?" escola":" escolas");
-  const badDeck=!!(ph.chal&&ph.chal.k==="twoSch"&&nSch>2);
-  const warn=$("preWarn");
-  if(badDeck){warn.hidden=false;warn.textContent="Seu deck tem "+nSch+" escolas. Reduza para no máximo 2 escolas em Trocar deck para jogar."}
-  else warn.hidden=true;
-  const pb=$("prePlay");pb.disabled=badDeck;
+  const renderPreDeck=()=>{
+    syncActiveDeck();
+    const tabs=$("preDeckTabs");tabs.textContent="";
+    for(let i=0;i<3;i++){
+      const d=P.decks[i],b=document.createElement("button");b.className="dkTab";
+      b.setAttribute("aria-selected",i===P.activeDeck);
+      const sp=document.createElement("span");sp.textContent=d.name;
+      const sm=document.createElement("small");sm.textContent=d.cards.length+"/6";
+      b.append(sp,sm);
+      b.onclick=()=>{if(P.activeDeck===i)return;setActiveDeck(i);persist();sfx("summon");renderPreDeck();renderHeroes()};
+      tabs.appendChild(b);
+    }
+    const dk=$("preDeck");dk.textContent="";
+    for(let i=0;i<6;i++){
+      const id=P.deck[i],sl=document.createElement("div");sl.className="pSlot";
+      if(id){sl.style.borderColor=SCH[C[id].s].c;sl.appendChild(icon(C[id],36))}
+      dk.appendChild(sl);
+    }
+    const nSch=deckSchools();
+    $("preSch").textContent=P.deck.length+"/6 · "+nSch+(nSch===1?" escola":" escolas");
+    const emptyDeck=!P.deck.length;
+    const badDeck=!!(ph.chal&&ph.chal.k==="twoSch"&&nSch>2);
+    const warn=$("preWarn");
+    if(emptyDeck){warn.hidden=false;warn.textContent="Este deck está vazio. Selecione outro deck acima ou toque em Editar deck."}
+    else if(badDeck){warn.hidden=false;warn.textContent="Seu deck tem "+nSch+" escolas. Reduza para no máximo 2 escolas ou troque de deck para jogar."}
+    else warn.hidden=true;
+    $("prePlay").disabled=emptyDeck||badDeck;
+  };
+  renderPreDeck();
+  const pb=$("prePlay");
   pb.onclick=()=>{if(pb.disabled)return;$("pre").classList.remove("on");startPhase(preSpec)};
   $("pre").classList.add("on");
 }
@@ -4961,6 +5507,11 @@ if(mRedMQ&&mRedMQ.addEventListener)mRedMQ.addEventListener("change",initMenuBgFx
 function goHome(){G=null;sel=null;openLinTip=null;if($("linTip"))$("linTip").classList.remove("on");$("over").classList.remove("on");$("pause").classList.remove("on");$("tipc").classList.remove("on");$("pre").classList.remove("on");document.body.className="home";renderHome();applyMenuTabBg($("home").dataset.tab);showMenuBg(true)}
 function startPhase(spec,snap){
   const sp=normSpec(spec);
+  syncActiveDeck();
+  if(!snap){
+    const chk=sp.mode?makeChallengeStage(sp):sp.endless?makeEndless():makeStage(sp.r,sp.s,sp.hard);
+    if(!chk.deck&&!chk.presetUnits&&!P.deck.length){sfx("no");hToast("Seu deck ativo está vazio! Escolha ou monte um deck.");goHome();setTab("H");return}
+  }
   if(!sp.endless&&!sp.mode){
     const chk=makeStage(sp.r,sp.s,sp.hard);
     if(chk.chal&&chk.chal.k==="twoSch"&&deckSchools()>2&&!snap){curRealm=sp.r;curHard=sp.hard;goHome();openPre(sp.r,sp.s,sp.hard);return}
