@@ -473,6 +473,29 @@ body.home #home,body.game #game{display:flex}
 #godReveal .grBtn{opacity:0;pointer-events:none;transition:opacity .4s .35s;position:relative;z-index:2}
 #godReveal.show .grName,#godReveal.show .grDesc{opacity:1}
 #godReveal.show .grBtn{opacity:1;pointer-events:auto}
+.hc.schLock{opacity:.68;background:#0d1411;border-color:#26332c}
+.hc.schLock .ct{color:#d8c48a;font-weight:700}
+.dailyFeat{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border:1.5px solid var(--gold);background:linear-gradient(135deg,#1d2b22,#121a16 70%,#1f1c12);margin-bottom:10px;position:relative}
+.dailyFeat.bought{opacity:.62}
+.dailyFeat.popBuy{animation:buyPop .4s ease}
+.dailyFeat .dfInfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dailyFeat .dfTag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--gold)}
+.dailyFeat .dfNm{font-family:var(--display);font-size:20px;line-height:1.1;color:var(--parch)}
+.dailyFeat .dfMt{font-size:12px;color:var(--dim)}
+.dailyFeat .btn{flex:none;display:flex;align-items:center;gap:5px;padding:8px 14px}
+.shRow.lock{opacity:.65}
+#schUnlock{position:fixed;inset:0;z-index:125;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,9,8,.88);backdrop-filter:blur(4px)}
+#schUnlock.on{display:flex}
+#schUnlock .suCard{width:min(360px,100%);border-radius:14px;padding:22px 18px 18px;text-align:center;background:linear-gradient(160deg,#1a2620,#0d1411 72%);border:2px solid var(--gold);box-shadow:0 14px 40px #000a;display:flex;flex-direction:column;align-items:center;gap:10px}
+#schUnlock .suEyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#ffe680}
+#schUnlock .suBanner{width:100%;padding:14px 12px;border-radius:10px;border:1.5px solid var(--gold);background:rgba(0,0,0,.32)}
+#schUnlock .suSch{font-family:var(--display);font-size:30px;line-height:1.05;margin-bottom:4px}
+#schUnlock .suRealm{font-size:13px;color:#d9d4c4}
+#schUnlock .suGift{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:#0a120fcc;border:1px solid #ffffff22;text-align:left}
+#schUnlock .suGift .sgBadge{display:inline-block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:2px 6px;border-radius:99px;background:#e4b548;color:#141008;margin-bottom:3px}
+#schUnlock .suGift .sgNm{font-weight:700;font-size:15px;color:var(--parch)}
+#schUnlock .suGift .sgMt{font-size:12px;color:var(--dim)}
+#schUnlock .btn{width:100%;margin-top:4px}
 #godVidOv{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;background:#000;opacity:0;transition:opacity .26s ease;touch-action:none}
 #godVidOv.on{display:flex;opacity:1}
 #godVidEl{width:100%;height:100%;object-fit:contain;background:#000;pointer-events:none}
@@ -616,7 +639,9 @@ body.home #home,body.game #game{display:flex}
       <div>Renova em <b class="num" id="shopTimer">--:--:--</b></div>
       <button class="btn" id="bShopRef"></button>
     </div>
-    <div class="secT"><span>Ofertas do dia</span><span>1 compra cada</span></div>
+    <div class="secT"><span>Oferta do dia</span><span>troca à meia-noite</span></div>
+    <div id="shopSpecial"></div>
+    <div class="secT"><span>Ofertas em moedas e baú</span><span>1 compra cada</span></div>
     <div class="shopGrid" id="shopDaily"></div>
     <div class="secT"><span>Baús e câmbio</span><span>sempre disponíveis</span></div>
     <div class="shopFix" id="shopFixed"></div>
@@ -691,6 +716,18 @@ body.home #home,body.game #game{display:flex}
   <div class="grName" id="grName"></div>
   <div class="grDesc" id="grDesc"></div>
   <button class="btn go grBtn" id="grOk">Continuar</button>
+</div>
+
+<div id="schUnlock" aria-modal="true" role="dialog">
+  <div class="suCard" id="suCard">
+    <div class="suEyebrow" id="suEyebrow">NOVA ESCOLA LIBERADA!</div>
+    <div class="suBanner" id="suBanner">
+      <div class="suSch" id="suSch"></div>
+      <div class="suRealm" id="suRealm"></div>
+    </div>
+    <div id="suGifts" style="width:100%;display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn go" id="suOk">Continuar</button>
+  </div>
 </div>
 
 <div id="godVidOv" aria-modal="true" role="dialog">
@@ -1128,8 +1165,15 @@ const CHESTS={
  l:{n:"Baú Lendário",slots:6,coins:[250,400],w:{C:0,R:0,E:70,L:30},min:"L",price:900,cur:"g",col:["#9b4dff","#521d94","#ffb83d"]}
 };
 const CHEST_ORD=["m","p","o","l"];
-const PITY_FIRST=5,PITY_MAX=25;
+// Garantia editável do Baú de Ouro: 1º Lendário garantido em PITY_FIRST baús; demais em PITY_MAX baús
+const PITY_FIRST=8,PITY_MAX=20;
 function pityCap(){return BASES.some(id=>C[id].rar==="L"&&P.heroes[id])?PITY_MAX:PITY_FIRST}
+// Oferta do dia editável: 1 carta específica de escola liberada (raridade ponderada; troca à meia-noite)
+const DAILY_OFFER_CFG={
+  R:{w:62,price:40},
+  E:{w:30,price:120},
+  L:{w:8,price:350}
+};
 const TH={
  forest:{g:"#1f3a2c",b1:"#2c4f38",b2:"#172c1d",out:"#0b1411",r:["#2b2418","#73633e","#85744a"],peb:["#5a4d32","#a59465"],amb:["#e9f28a",0,0,12],sw:"linear-gradient(160deg,#2c6b3f,#12261a)"},
  swamp:{g:"#1c3334",b1:"#28474a",b2:"#132426",out:"#091112",r:["#1d1a14","#5b5340","#6d6550"],peb:["#3f3a2c","#8a8266"],amb:["#9dffb0",0.2,-0.1,14],sw:"linear-gradient(160deg,#2f6a66,#0e1f20)"},
@@ -1156,6 +1200,57 @@ const PHASES=[
  {n:"Fenda Sem Fim",th:"abyss",waves:0,hp:3.6,endless:true,wp:[[3,-1],[3,2],[1,2],[1,5],[5,5],[5,2.55]]}
 ];
 const REALMS=PHASES.slice(0,6);
+// Desbloqueio editável de escolas e marcos por reino (índice 0..5 = Reinos 1..6).
+// As escolas do Reino 1 já começam liberadas; Reinos 2..6 liberam ao vencer o chefe do reino anterior.
+const REALM_UNLOCK=[
+  {realm:1,schools:["N","L"],gods:false,legChest:false}, // Reino 1 Floresta
+  {realm:2,schools:["S"],gods:false,legChest:false},     // Reino 2 Pântano
+  {realm:3,schools:["R"],gods:false,legChest:false},     // Reino 3 Deserto
+  {realm:4,schools:["G"],gods:false,legChest:false},     // Reino 4 Neve
+  {realm:5,schools:["F"],gods:false,legChest:false},     // Reino 5 Vulcão
+  {realm:6,schools:[],gods:true,legChest:true}           // Reino 6 Abismo (Deuses nível 5 + Baú Lendário)
+];
+function schoolRealm(sch){
+  for(const u of REALM_UNLOCK)if(u.schools&&u.schools.includes(sch))return u.realm;
+  return 1;
+}
+function realmEntryUnlocked(idx){return idx<=0||realmDone(idx-1)}
+function unlockedSchools(){
+  const set=new Set();
+  REALM_UNLOCK.forEach((u,i)=>{
+    if(realmEntryUnlocked(i)&&u.schools)for(const s of u.schools)set.add(s);
+  });
+  // Migração: escolas em que o jogador já possui alguma carta ficam liberadas
+  for(const id in P.heroes)if(C[id]&&C[id].s)set.add(C[id].s);
+  return set;
+}
+function isSchoolUnlocked(sch){return unlockedSchools().has(sch)}
+function unlockedBases(){const u=unlockedSchools();return BASES.filter(id=>u.has(C[id].s))}
+function areGodsUnlocked(){
+  const idx=REALM_UNLOCK.findIndex(u=>u.gods);
+  if(idx>=0&&realmEntryUnlocked(idx))return true;
+  return GODS.some(id=>P.found[id]);
+}
+function isLegChestUnlocked(){
+  const idx=REALM_UNLOCK.findIndex(u=>u.legChest);
+  return idx<0||realmEntryUnlocked(idx);
+}
+function fusionUnlockRealm(c){
+  if(!c||!c.rec)return 1;
+  let best=99;
+  for(const k of c.rec.split(" ")){
+    const r=Math.max(schoolRealm(k[0]),schoolRealm(k[1]));
+    if(r<best)best=r;
+  }
+  return best===99?1:best;
+}
+function isFusionUnlocked(c){
+  if(!c)return true;
+  if(c.tier===1)return isSchoolUnlocked(c.s);
+  if(c.tier===5)return areGodsUnlocked();
+  const u=unlockedSchools();
+  return c.rec.split(" ").some(k=>u.has(k[0])&&u.has(k[1]));
+}
 const ST_INFO={
   normal:{n:"Normal",c:"#86d957",ico:""},
   elite:{n:"Elite",c:"#c07bff",ico:"✦"},
@@ -1255,7 +1350,7 @@ function dailyConfig(){
   const r=Math.floor(R()*REALMS.length);
   const chal=DAILY_CHALS[Math.floor(R()*DAILY_CHALS.length)];
   const owned=BASES.filter(id=>P.heroes[id]);
-  const deck=pickN(owned.length?owned:["piro","crio","druida","ladino"],6,R);
+  const deck=pickN(owned.length?owned:["druida","domadora","cleriga","novica"],6,R);
   return{day:d,r,th:REALMS[r].th,rn:REALMS[r].n,chal,deck,waves:8,factor:PH_HP[r]*1.15};
 }
 function weeklyConfig(){
@@ -1518,7 +1613,16 @@ function setActiveDeck(idx){
   syncActiveDeck();
 }
 function ensureStart(){
-  if(!Object.keys(P.heroes).length){for(const id of["piro","crio","druida","ladino"])P.heroes[id]={lv:1,cards:0};P.deck=["piro","crio","druida","ladino"];P.chests.p=Math.max(P.chests.p,1)}
+  if(!Object.keys(P.heroes).length){
+    const startIds=[];
+    for(const s of ((REALM_UNLOCK[0]&&REALM_UNLOCK[0].schools)||["N","L"])){
+      for(const id of BASES)if(C[id].s===s&&C[id].rar==="C"&&startIds.length<4)startIds.push(id);
+    }
+    if(!startIds.length)startIds.push("druida","domadora","cleriga","novica");
+    for(const id of startIds)P.heroes[id]={lv:1,cards:0};
+    P.deck=[...startIds];
+    P.chests.p=Math.max(P.chests.p,1);
+  }
   if(!Array.isArray(P.decks)||P.decks.length!==3){
     P.decks=[{name:"Deck 1",cards:[...(P.deck||[])]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}];
     P.activeDeck=0;
@@ -2701,10 +2805,12 @@ function finish(won){
   if(G.ph.mode){finishChallenge(won);return}
   const before=plvl(),ph=G.ph,endless=!!ph.endless,castle=Math.ceil(G.lives);
   const key=ph.key,prev=endless?0:(P.stars[key]||0),first=!endless&&!prev;
+  const wasRealmDone=(!endless&&!ph.hard&&ph.s===10)?realmDone(ph.r):true;
   const obj1=won,obj2=won&&castle>70,obj3=won&&checkStar3(ph.star3,G);
   const eMult=ph.type==="elite"?2:1,hMult=ph.hard?2:1,cMult=ph.type==="treasure"?3:eMult;
   let stars=0,gain=Math.round(G.xp*eMult*hMult);
   track("kills",G.kills||0);
+  let unlockedRealmEntry=null,unlockedFreeCards=[];
   if(won&&!endless){
     stars=(obj1?1:0)+(obj2?1:0)+(obj3?1:0);
     track("wins");if(stars===3)track("stars");
@@ -2715,6 +2821,20 @@ function finish(won){
     if(ph.hard)track("hardWins");
     gain+=Math.round((40+20*ph.r+stars*10)*(first?1:0.5)*eMult*hMult);
     P.stars[key]=Math.max(P.stars[key]||0,stars);
+    if(!ph.hard&&ph.s===10&&!wasRealmDone){
+      const nxt=REALM_UNLOCK[ph.r+1];
+      if(nxt){
+        unlockedRealmEntry=nxt;
+        for(const sc of (nxt.schools||[])){
+          const cPool=BASES.filter(id=>C[id].s===sc&&C[id].rar==="C");
+          const freeId=cPool.find(id=>!P.heroes[id])||cPool[0];
+          if(freeId){
+            const isNew=grantHeroCards(freeId,1);
+            unlockedFreeCards.push({sch:sc,id:freeId,isNew});
+          }
+        }
+      }
+    }
   }
   if(endless&&G.wave-1>P.best)P.best=G.wave-1;
   const cleared=G.wave-(won?0:1);
@@ -2760,6 +2880,7 @@ function finish(won){
     startPhase(target);
   };
   $("tipc").classList.remove("on");$("over").classList.add("on");
+  if(unlockedRealmEntry)showRealmUnlock(unlockedRealmEntry,unlockedFreeCards);
 }
 
 /* ================= fusão ================= */
@@ -2771,6 +2892,7 @@ function fusionOf(a,b){
   const key=[A.s,B.s].sort().join("");
   const ra=a.rar||"C",rb=b.rar||"C";
   if(A.tier===4){
+    if(!areGodsUnlocked())return{err:"Panteão bloqueado",why:"Vença o chefe do Reino 5 para despertar Deuses no Reino 6."};
     if(G&&G.units.some(u=>!u.minion&&C[u.cls]&&C[u.cls].tier===5))return{err:"Panteão cheio",why:"No máximo 1 Deus em campo por vez."};
     if((ra!=="L"&&ra!=="S")||(rb!=="L"&&rb!=="S"))return{err:"Requer Lendário+",why:"Apenas dois níveis 4 Lendários ou Supremos podem despertar um Deus."};
     return{id:RES[5][key],ra,rb,sum:10,probs:[0,0,0,0,0],divine:true,same:ra===rb,pityReady:false};
@@ -4530,9 +4652,14 @@ function renderHeroes(){
     return true;
   });
   const rIdx=id=>RAR_ORD.indexOf(C[id].rar);
+  const unlSet=unlockedSchools();
   list.sort((a,b)=>{
-    const oa=P.heroes[a]?1:0,ob=P.heroes[b]?1:0;
+    const oa=P.heroes[a]?2:(unlSet.has(C[a].s)?1:0),ob=P.heroes[b]?2:(unlSet.has(C[b].s)?1:0);
     if(ob!==oa)return ob-oa;
+    if(oa===0&&ob===0){
+      const ra2=schoolRealm(C[a].s),rb2=schoolRealm(C[b].s);
+      if(ra2!==rb2)return ra2-rb2;
+    }
     if(hFilters.sort==="lv"){
       const la=(P.heroes[a]||{}).lv||0,lb=(P.heroes[b]||{}).lv||0;
       return (lb-la)||(((P.heroes[b]||{}).cards||0)-((P.heroes[a]||{}).cards||0))||(rIdx(b)-rIdx(a));
@@ -4546,12 +4673,12 @@ function renderHeroes(){
   const co=$("coll");co.textContent="";
   for(const id of list){
     const c=C[id],h=P.heroes[id],r=RAR[c.rar],si=SCH[c.s],tr=safeEntry(TROLE,heroTRole(id),"TROLE",{n:"?",c:"#fff"});
-    const inDk=P.deck.includes(id);
+    const inDk=P.deck.includes(id),schOpen=unlSet.has(c.s),lockedSch=!h&&!schOpen;
     const b=document.createElement("button");
-    b.className="hc"+(h?"":" lock")+(inDk?" inDk":"");
-    b.style.borderTopColor=r.c;
+    b.className="hc"+(h?"":lockedSch?" lock schLock":" lock")+(inDk?" inDk":"");
+    b.style.borderTopColor=lockedSch?"#3b4640":r.c;
     const nm=document.createElement("div");nm.className="nm";nm.textContent=h?c.n:"???";
-    const rr2=document.createElement("div");rr2.className="rr";rr2.style.color=r.c;rr2.textContent=r.n+(h?" · Nv "+h.lv:"");
+    const rr2=document.createElement("div");rr2.className="rr";rr2.style.color=lockedSch?"var(--dim)":r.c;rr2.textContent=r.n+(h?" · Nv "+h.lv:"");
     const meta=document.createElement("div");meta.className="metaRow";
     const mSch=document.createElement("span");mSch.className="mBadge";mSch.style.borderColor=si.c;mSch.style.color=si.c;mSch.textContent=si.n;
     const mRol=document.createElement("span");mRol.className="mBadge";mRol.style.borderColor=tr.c;mRol.style.color=tr.c;mRol.textContent=tr.n;
@@ -4574,6 +4701,8 @@ function renderHeroes(){
       info.title=canUp?"Pronto para evoluir!":"Detalhes e evolução";
       info.onclick=e=>{e.stopPropagation();openHero(id)};
       b.appendChild(info);
+    }else if(lockedSch){
+      const ct=document.createElement("div");ct.className="ct";ct.textContent="🔒 Libera no Reino "+schoolRealm(c.s);b.appendChild(ct);
     }else{
       const ct=document.createElement("div");ct.className="ct";ct.textContent="Em baús";b.appendChild(ct);
     }
@@ -4595,14 +4724,16 @@ function openHero(id){
   try{
     const c=C[id];if(!c){warnOnce("openHero:"+id,"Herói ausente em C: "+id);return}
     const h=P.heroes[id],r=safeEntry(RAR,c.rar,"RAR",{n:"?",c:"#fff"}),ab=ABIL[id],si=safeEntry(SCH,c.s,"SCH",{n:"?",c:"#fff"});
-    $("heroName").textContent=h?c.n:"Herói não encontrado";
+    const lockedSch=!h&&!isSchoolUnlocked(c.s),reqR=schoolRealm(c.s);
+    $("heroName").textContent=h?c.n:lockedSch?"🔒 Herói bloqueado":"Herói não encontrado";
     $("heroIco").replaceChildren(icon(c,96,!h));
     const tg=$("heroTags");tg.textContent="";const add=(t,col)=>{const s=document.createElement("span");s.className="chip";s.textContent=t;if(col)s.style.borderColor=col;tg.appendChild(s)};
     add(r.n,r.c);add(si.n,si.c);
     const tr=safeEntry(TROLE,heroTRole(id),"TROLE",{n:"?",c:"#fff"});add(tr.n,tr.c);
     for(const ltg of heroTags(id)){const m=safeEntry(LINEAGE_META,ltg,"LINEAGE_META",{ico:"?",n:"?",c:"#fff"});add(m.ico+" "+m.n,m.c)}
     if(h)add("Nível "+h.lv,"#e4b548");
-    $("heroDesc").textContent=h?(ab?(c.desc+" "+ab.trigs.map(k=>{const ti=safeEntry(TRIG,k,"TRIG",{ico:"?",n:"?"});return ti.ico+" "+ti.n}).join(" + ")+": "+ab.desc):c.desc):"Sai em baús. Quanto mais raro, melhor o baú precisa ser.";
+    if(lockedSch)add("🔒 Libera no Reino "+reqR,"#e4b548");
+    $("heroDesc").textContent=h?(ab?(c.desc+" "+ab.trigs.map(k=>{const ti=safeEntry(TRIG,k,"TRIG",{ico:"?",n:"?"});return ti.ico+" "+ti.n}).join(" + ")+": "+ab.desc):c.desc):lockedSch?("Libera no Reino "+reqR+" ("+(REALMS[reqR-1]?REALMS[reqR-1].n:"Reino "+reqR)+"). Vença o chefe do Reino "+(reqR-1)+" para liberar a escola "+si.n+"."):"Sai em baús. Quanto mais raro, melhor o baú precisa ser.";
     const fx=$("heroFx");fx.textContent="";
     if(h){for(const[t,p]of c.fx){const s=document.createElement("span");s.className="chip";s.textContent=safeEntry(FX,t,"FX",{n:"?"}).n+" "+p;fx.appendChild(s)}
       for(const t of["Dano "+(c.dmg*heroPw(id)).toFixed(1),c.rate.toFixed(2)+" atq/s","Alcance "+c.range.toFixed(1)]){const s=document.createElement("span");s.className="chip";s.textContent=t;fx.appendChild(s)}}
@@ -4637,29 +4768,38 @@ function shopState(){
   if(!P.shop||P.shop.day!==d)P.shop={day:d,ref:0,bought:{}};
   return P.shop;
 }
+function dailySpecialOffer(){
+  const st2=shopState(),R=rng(st2.day*9973+517);
+  const avail=unlockedBases();
+  const rars=["R","E","L"].filter(k=>DAILY_OFFER_CFG[k]&&avail.some(id=>C[id].rar===k));
+  if(!rars.length)return null;
+  const totW=rars.reduce((s,k)=>s+DAILY_OFFER_CFG[k].w,0);
+  let rv=R()*totW,rar=rars[0];
+  for(const k of rars){rv-=DAILY_OFFER_CFG[k].w;if(rv<0){rar=k;break}}
+  let pool=avail.filter(id=>C[id].rar===rar&&!(P.heroes[id]&&P.heroes[id].lv>=10));
+  if(!pool.length)pool=avail.filter(id=>C[id].rar===rar);
+  const id=pool[Math.floor(R()*pool.length)];
+  return id?{id,rar,qty:1,price:DAILY_OFFER_CFG[rar].price,cur:"g"}:null;
+}
 function shopOffers(){
   const st2=shopState(),R=rng(st2.day*31+st2.ref*7919+137);
   const pick=arr=>arr.length?arr[Math.floor(R()*arr.length)]:null;
-  const openOf=rar=>{const a=BASES.filter(id=>C[id].rar===rar&&!(P.heroes[id]&&P.heroes[id].lv>=10));return a.length?a:BASES.filter(id=>C[id].rar===rar)};
+  const avail=unlockedBases();
+  const openOf=rar=>{const a=avail.filter(id=>C[id].rar===rar&&!(P.heroes[id]&&P.heroes[id].lv>=10));return a.length?a:avail.filter(id=>C[id].rar===rar)};
   const commons=openOf("C");
   const c1=pick(commons),c2=pick(commons.filter(id=>id!==c1))||c1;
   const r1=pick(openOf("R"));
-  const e1=pick(openOf("E"));
-  const lPool=BASES.filter(id=>C[id].rar==="L"&&!(P.heroes[id]&&P.heroes[id].lv>=10));
-  const l1=pick(lPool);
   const dcPool=[
     {t:"m",price:75,orig:100,cur:"c",rar:"C"},
     {t:"p",price:225,orig:300,cur:"c",rar:"R"},
-    {t:"o",price:135,orig:180,cur:"g",rar:"E"},
-    {t:"l",price:675,orig:900,cur:"g",rar:"L"}
+    {t:"o",price:135,orig:180,cur:"g",rar:"E"}
   ];
+  if(isLegChestUnlocked())dcPool.push({t:"l",price:675,orig:900,cur:"g",rar:"L"});
   const dc=pick(dcPool);
   return[
     {kind:"card",id:c1,qty:18,price:150,cur:"c",rar:"C"},
     {kind:"card",id:c2,qty:18,price:150,cur:"c",rar:"C"},
     {kind:"card",id:r1,qty:5,price:350,cur:"c",rar:"R"},
-    {kind:"card",id:e1,qty:2,price:75,cur:"g",rar:"E"},
-    {kind:"card",id:l1,qty:1,price:650,cur:"g",rar:"L",feat:1},
     {kind:"chest",t:dc.t,price:dc.price,orig:dc.orig,cur:dc.cur,rar:dc.rar,disc:1}
   ];
 }
@@ -4670,13 +4810,41 @@ function fmtMidnight(){
 }
 let shopPop=null;
 function renderShop(){
-  const st2=shopState(),offers=shopOffers();
+  const st2=shopState(),offers=shopOffers(),spOffer=dailySpecialOffer();
   $("shopTimer").textContent=fmtMidnight();
   const rb=$("bShopRef"),left=3-st2.ref;
   rb.textContent="";
   if(left>0){rb.append("Renovar (",left,"/3) · 20 ",curIco("g"));rb.disabled=P.gems<20}
   else{rb.textContent="Renovado (3/3)";rb.disabled=true}
-  rb.onclick=()=>{if(rb.disabled)return;P.gems-=20;st2.ref++;st2.bought={};shopPop="ref";persist();sfx("buy");hToast("Ofertas renovadas!");renderHome()};
+  rb.onclick=()=>{if(rb.disabled)return;P.gems-=20;st2.ref++;const spB=st2.bought.sp;st2.bought=spB?{sp:1}:{};shopPop="ref";persist();sfx("buy");hToast("Ofertas renovadas!");renderHome()};
+  const spBox=$("shopSpecial");
+  if(spBox){
+    spBox.textContent="";
+    if(spOffer&&C[spOffer.id]){
+      const c=C[spOffer.id],r=RAR[spOffer.rar],si=SCH[c.s],bought=!!st2.bought.sp,owned=!!P.heroes[spOffer.id];
+      const el=document.createElement("div");
+      el.className="dailyFeat"+(bought?" bought":"")+(shopPop==="sp"?" popBuy":"");
+      el.style.borderColor=r.c;
+      const info=document.createElement("div");info.className="dfInfo";
+      const tag=document.createElement("div");tag.className="dfTag";tag.style.color=r.c;tag.textContent="Oferta do dia · "+r.n+" · "+si.n;
+      const nm=document.createElement("div");nm.className="dfNm";nm.textContent=c.n;if(spOffer.rar==="L")nm.style.color="#ffb83d";
+      const mt=document.createElement("div");mt.className="dfMt";mt.textContent="1 carta específica"+(!owned?" · Desbloqueia na coleção":"");
+      info.append(tag,nm,mt);
+      const btn=document.createElement("button");btn.className="btn go";
+      if(bought){btn.textContent="Comprado";btn.disabled=true}
+      else{btn.append(curIco("g"),String(spOffer.price));btn.disabled=P.gems<spOffer.price}
+      btn.onclick=()=>{
+        if(btn.disabled)return;
+        P.gems-=spOffer.price;
+        const isNew=grantHeroCards(spOffer.id,1);
+        st2.bought.sp=1;shopPop="sp";track("shopBuys");persist();sfx(isNew?"win":"buy");
+        hToast(isNew?c.n+" desbloqueado!":"+1 carta de "+c.n+"!");
+        renderHome();
+      };
+      el.append(icon(c,60),info,btn);
+      spBox.appendChild(el);
+    }
+  }
   const grid=$("shopDaily");grid.textContent="";
   offers.forEach((o,idx)=>{
     const card=document.createElement("div"),bought=!!st2.bought[idx],r=RAR[o.rar];
@@ -4688,7 +4856,7 @@ function renderShop(){
     nm.className="nm";qt.className="qt";btn.className="btn go";
     if(o.kind==="card"){
       if(!o.id){
-        nm.textContent="Lendários completos";qt.textContent="Todos no nível máximo";
+        nm.textContent="Cartas completas";qt.textContent="Todas no nível máximo";
         btn.textContent="Completo";btn.disabled=true;card.classList.add("bought");
         card.append(nm,qt,btn);grid.appendChild(card);return;
       }
@@ -4727,23 +4895,33 @@ function renderShop(){
     card.append(nm,qt,btn);grid.appendChild(card);
   });
   const fix=$("shopFixed");fix.textContent="";
+  const legOpen=isLegChestUnlocked();
   for(const t of CHEST_ORD){
-    const ch=CHESTS[t],row=document.createElement("div");
-    row.className="shRow"+(shopPop==="f"+t?" popBuy":"");
+    const ch=CHESTS[t],row=document.createElement("div"),locked=(t==="l"&&!legOpen);
+    row.className="shRow"+(locked?" lock":"")+(shopPop==="f"+t?" popBuy":"");
     const tx=document.createElement("div");tx.className="tx";
     const nm=document.createElement("div");nm.className="nm";nm.textContent=ch.n;if(t==="l")nm.style.color="#ffb83d";
     const mt=document.createElement("div");mt.className="mt";
-    mt.textContent=ch.slots+" sorteios"+(ch.min?" · garante "+RAR[ch.min].n.toLowerCase():"")+(t==="o"?" · garantia "+P.pity+"/"+pityCap():"")+" · você tem "+(P.chests[t]||0)+".";
+    if(locked){
+      mt.textContent="🔒 Libera na loja no Reino 6 (vença o chefe do Reino 5).";
+    }else{
+      const pLeft=Math.max(1,pityCap()-P.pity);
+      mt.textContent=ch.slots+" sorteios"+(ch.min?" · garante "+RAR[ch.min].n.toLowerCase():"")+(t==="o"?" · Lendário garantido em "+pLeft+(pLeft===1?" baú":" baús"):"")+" · você tem "+(P.chests[t]||0)+".";
+    }
     tx.append(nm,mt);
     const btn=document.createElement("button");btn.className="btn go";
-    const can=(ch.cur==="g"?P.gems:P.coins)>=ch.price;
-    btn.append(curIco(ch.cur),String(ch.price));btn.disabled=!can;
-    btn.onclick=()=>{
-      if(btn.disabled)return;
-      if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;
-      P.chests[t]++;shopPop="f"+t;track("shopBuys");persist();sfx("buy");
-      hToast("+1 "+ch.n+"!");renderHome();
-    };
+    if(locked){
+      btn.textContent="🔒 Reino 6";btn.disabled=true;
+    }else{
+      const can=(ch.cur==="g"?P.gems:P.coins)>=ch.price;
+      btn.append(curIco(ch.cur),String(ch.price));btn.disabled=!can;
+      btn.onclick=()=>{
+        if(btn.disabled)return;
+        if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;
+        P.chests[t]++;shopPop="f"+t;track("shopBuys");persist();sfx("buy");
+        hToast("+1 "+ch.n+"!");renderHome();
+      };
+    }
     row.append(drawChest(t,48),tx,btn);fix.appendChild(row);
   }
   const ex=document.createElement("div");ex.className="shRow"+(shopPop==="ex"?" popBuy":"");
@@ -4759,20 +4937,26 @@ function renderShop(){
 }
 function renderChests(){
   const box=$("chests");box.textContent="";let tot=0;
-  for(const t of CHEST_ORD){const ch=CHESTS[t],n=P.chests[t]||0;tot+=n;
+  const legOpen=isLegChestUnlocked();
+  for(const t of CHEST_ORD){const ch=CHESTS[t],n=P.chests[t]||0,lockedBuy=(t==="l"&&!legOpen);tot+=n;
     const row=document.createElement("div");row.className="ch";const tx=document.createElement("div");tx.className="tx";
     const nm=document.createElement("div");nm.className="nm";nm.textContent=ch.n;if(t==="l")nm.style.color="#ffb83d";
     const mt=document.createElement("div");mt.className="mt";
     const tw=ch.w.C+ch.w.R+ch.w.E+ch.w.L,pc=k=>{const v=ch.w[k]/tw*100;return(v%1?v.toFixed(1).replace(".",","):v)+"%"};
     const probs=t==="l"?"Épico "+pc("E")+", lendário "+pc("L"):"Comum "+pc("C")+", raro "+pc("R")+", épico "+pc("E")+", lendário "+pc("L");
-    mt.textContent=ch.slots+" sorteios e "+ch.coins[0]+" a "+ch.coins[1]+" moedas. "+probs+(ch.min?". Garante pelo menos 1 "+RAR[ch.min].n.toLowerCase():"")+(t==="o"?". Lendário garantido em até "+Math.max(1,pityCap()-P.pity)+" baús ("+P.pity+"/"+pityCap()+")":"")+". Você tem "+n+".";
+    const pLeft=Math.max(1,pityCap()-P.pity);
+    mt.textContent=ch.slots+" sorteios e "+ch.coins[0]+" a "+ch.coins[1]+" moedas. "+probs+(ch.min?". Garante pelo menos 1 "+RAR[ch.min].n.toLowerCase():"")+(t==="o"?". Lendário garantido em "+pLeft+(pLeft===1?" baú":" baús")+" ("+P.pity+"/"+pityCap()+")":"")+(lockedBuy?". Compra libera no Reino 6":"")+". Você tem "+n+".";
     tx.append(nm,mt);
     const bt=document.createElement("div");bt.className="bt";
     const o=document.createElement("button");o.className="btn go";o.textContent="Abrir";o.disabled=n<1;o.onclick=()=>openChest(t);
     const b=document.createElement("button");b.className="btn";b.style.display="flex";b.style.alignItems="center";b.style.justifyContent="center";b.style.gap="5px";
-    b.append("Comprar ",curIco(ch.cur),String(ch.price));
-    const can=(ch.cur==="g"?P.gems:P.coins)>=ch.price;b.disabled=!can;
-    b.onclick=()=>{if(b.disabled)return;if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;P.chests[t]++;persist();sfx("buy");hToast("+1 "+ch.n+"!");renderHome()};
+    if(lockedBuy){
+      b.textContent="🔒 Reino 6";b.disabled=true;
+    }else{
+      b.append("Comprar ",curIco(ch.cur),String(ch.price));
+      const can=(ch.cur==="g"?P.gems:P.coins)>=ch.price;b.disabled=!can;
+      b.onclick=()=>{if(b.disabled)return;if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;P.chests[t]++;persist();sfx("buy");hToast("+1 "+ch.n+"!");renderHome()};
+    }
     bt.append(o,b);row.append(drawChest(t,64),tx,bt);box.appendChild(row)}
   $("tbN").textContent=tot||"";
 }
@@ -4785,14 +4969,19 @@ function openChest(t){
   if(t==="o"){const pCap=pityCap();P.pity++;if(rs.includes("L"))P.pity=0;else if(P.pity>=pCap){rs[1]="L";P.pity=0}}
   track("chests");
   const allowNewLeg=t==="o"||t==="l";
+  const avail=unlockedBases();
+  const basePool=avail.length?avail:BASES;
   for(const r of rs){
-    let r2=r,pool=BASES.filter(id=>C[id].rar===r2);
-    if(r2==="L"&&!allowNewLeg){const ownedL=pool.filter(id=>P.heroes[id]);if(ownedL.length)pool=ownedL;else{r2="E";pool=BASES.filter(id=>C[id].rar==="E")}}
+    let r2=r,pool=basePool.filter(id=>C[id].rar===r2);
+    if(r2==="L"&&!allowNewLeg){const ownedL=pool.filter(id=>P.heroes[id]);if(ownedL.length)pool=ownedL;else{r2="E";pool=basePool.filter(id=>C[id].rar==="E")}}
+    if(!pool.length){
+      for(const fb of["E","R","C","L"]){const fp=basePool.filter(id=>C[id].rar===fb);if(fp.length){r2=fb;pool=fp;break}}
+    }
     let nonMax=pool.filter(id=>!(P.heroes[id]&&P.heroes[id].lv>=10));
     if(nonMax.length)pool=nonMax;
     else if(r2==="C"||r2==="R"){
-      let nr=r2==="C"?"R":"E",np=BASES.filter(id=>C[id].rar===nr&&!(P.heroes[id]&&P.heroes[id].lv>=10));
-      if(!np.length&&nr==="R"){nr="E";np=BASES.filter(id=>C[id].rar==="E"&&!(P.heroes[id]&&P.heroes[id].lv>=10))}
+      let nr=r2==="C"?"R":"E",np=basePool.filter(id=>C[id].rar===nr&&!(P.heroes[id]&&P.heroes[id].lv>=10));
+      if(!np.length&&nr==="R"){nr="E";np=basePool.filter(id=>C[id].rar==="E"&&!(P.heroes[id]&&P.heroes[id].lv>=10))}
       if(np.length){r2=nr;pool=np}
     }
     const id=pool[Math.floor(Math.random()*pool.length)];
@@ -5551,6 +5740,19 @@ function openGrim(){
     const h=document.createElement("h3");h.textContent=t===1?"Nível 1 · heróis dos baús, invocados com ouro":"Nível "+t+" · fusão de dois guerreiros de nível "+(t-1)+(plvl()<FUSE_LV[t]?" (abre no nível "+FUSE_LV[t]+" de jogador)":"");list.appendChild(h);
     for(const id of ORDER){const c=C[id];if(c.tier!==t)continue;
       const fr=P.foundR[id]||{},known=t===1?!!P.heroes[id]:(!!P.found[id]||RAR_ORD.some(r=>fr[r]));
+      const unl=isFusionUnlocked(c);
+      if(!known&&!unl){
+        const reqR=t===1?schoolRealm(c.s):fusionUnlockRealm(c);
+        const row=document.createElement("div");row.className="row divLock";
+        const g=document.createElement("div");g.className="g";g.appendChild(icon(c,52,true));
+        const body=document.createElement("div");body.style.flex="1";body.style.minWidth="0";
+        const nh=document.createElement("div");nh.className="nh";
+        const n=document.createElement("div");n.className="n";n.textContent="🔒 ???";nh.appendChild(n);
+        body.appendChild(nh);
+        const hint=document.createElement("div");hint.className="p";hint.textContent="Libera no Reino "+reqR+(t===1?" (escola bloqueada)":" (depende de escola bloqueada)");
+        body.appendChild(hint);
+        row.append(g,body);list.appendChild(row);continue;
+      }
       const bestR=P.bestRar[id],hasSup=t>1&&bestR==="S";
       const row=document.createElement("div");row.className="row"+(hasSup?" sup":"");row.style.borderLeftColor=SCH[c.s].c;
       const body=document.createElement("div");body.style.flex="1";body.style.minWidth="0";
@@ -5585,8 +5787,8 @@ function openGrim(){
       list.appendChild(row)}
   }
   // Seção Panteão — Nível 5 (Deuses): surpresa total para não descobertos
-  const godsGot=GODS.filter(id=>!!P.found[id]).length;
-  const hp=document.createElement("h3");hp.textContent="✦ Panteão · Deuses (Nível 5) · "+godsGot+"/"+GODS.length;list.appendChild(hp);
+  const godsGot=GODS.filter(id=>!!P.found[id]).length,godsOpen=areGodsUnlocked();
+  const hp=document.createElement("h3");hp.textContent="✦ Panteão · Deuses (Nível 5) · "+godsGot+"/"+GODS.length+(godsOpen?"":" · 🔒 Libera no Reino 6");list.appendChild(hp);
   for(const id of GODS){
     const c=C[id],known=!!P.found[id];
     const row=document.createElement("div");row.className="row "+(known?"divine":"divLock");
@@ -5594,7 +5796,7 @@ function openGrim(){
     const g=document.createElement("div");g.className="g";g.appendChild(icon(c,56,!known,"D"));
     const body=document.createElement("div");body.style.flex="1";body.style.minWidth="0";
     const nh=document.createElement("div");nh.className="nh";
-    const n=document.createElement("div");n.className="n"+(known?" supName":"");n.textContent=known?c.n:"???";nh.appendChild(n);
+    const n=document.createElement("div");n.className="n"+(known?" supName":"");n.textContent=known?c.n:(godsOpen?"???":"🔒 ???");nh.appendChild(n);
     if(known){
       const db=document.createElement("span");db.className="divBadge";db.textContent="✦ DIVINO";nh.appendChild(db);
       const rb=document.createElement("button");rb.type="button";rb.className="revBtn";rb.textContent="▶ Rever cena";
@@ -5616,7 +5818,7 @@ function openGrim(){
         body.appendChild(abEl);
       }
     }else{
-      const hint=document.createElement("div");hint.className="p";hint.style.color="#bba87a";hint.textContent="Funda dois níveis 4 Lendários...";body.appendChild(hint);
+      const hint=document.createElement("div");hint.className="p";hint.style.color="#bba87a";hint.textContent=godsOpen?"Funda dois níveis 4 Lendários...":"🔒 Libera no Reino 6 (vença o chefe do Reino 5).";body.appendChild(hint);
     }
     row.append(g,body);list.appendChild(row);
   }
@@ -5658,6 +5860,38 @@ $("grOk").onclick=()=>{
   $("godReveal").classList.remove("on","sil","burst","show");
   if(G&&!G.over&&!godRevPrevPause)G.paused=false;
 };
+function showRealmUnlock(entry,freeCards){
+  const ov=$("schUnlock");if(!ov||!entry)return;
+  const rm=REALMS[entry.realm-1];
+  const hasSch=entry.schools&&entry.schools.length>0;
+  const firstSch=hasSch?SCH[entry.schools[0]]:null;
+  const accent=firstSch?firstSch.c:"#ffb83d";
+  $("suCard").style.borderColor=accent;
+  $("suBanner").style.borderColor=accent;
+  $("suEyebrow").textContent=hasSch?"NOVA ESCOLA LIBERADA!":"REINO "+entry.realm+" LIBERADO!";
+  const schEl=$("suSch");
+  schEl.style.color=accent;
+  schEl.textContent=hasSch?entry.schools.map(s=>SCH[s].n).join(" + "):"Portões do Abismo";
+  $("suRealm").textContent=hasSch
+    ?("Reino "+entry.realm+" · "+(rm?rm.n:"")+" aberto! Cartas desta escola agora aparecem em baús e ofertas.")
+    :"Deuses (Nível 5) despertáveis no Panteão + Baú Lendário disponível na Loja!";
+  const gifts=$("suGifts");gifts.textContent="";
+  for(const fc of (freeCards||[])){
+    const c=C[fc.id];if(!c)continue;
+    const row=document.createElement("div");row.className="suGift";row.style.borderColor=SCH[c.s].c+"88";
+    const tx=document.createElement("div");
+    const bd=document.createElement("div");bd.className="sgBadge";bd.textContent=fc.isNew?"Carta grátis · Novo herói":"Carta grátis · +1 carta";
+    const nm=document.createElement("div");nm.className="sgNm";nm.textContent=c.n;
+    const mt=document.createElement("div");mt.className="sgMt";mt.textContent=RAR[c.rar].n+" · Escola "+SCH[c.s].n;
+    tx.append(bd,nm,mt);
+    row.append(icon(c,60,false),tx);
+    gifts.appendChild(row);
+  }
+  sfx("discover");
+  ov.classList.add("on");
+}
+$("suOk").onclick=()=>$("schUnlock").classList.remove("on");
+$("schUnlock").onclick=e=>{if(e.target===$("schUnlock"))$("schUnlock").classList.remove("on")};
 $("bWave").onclick=()=>startWave(true);
 $("bSpeed").onclick=e=>{if(!G)return;G.speed=G.speed===1?2:1;e.currentTarget.textContent="Velocidade "+G.speed+"×";e.currentTarget.setAttribute("aria-pressed",G.speed===2)};
 $("bMap").onclick=()=>{if(!G||G.over)return;G.paused=true;$("pause").classList.add("on")};
