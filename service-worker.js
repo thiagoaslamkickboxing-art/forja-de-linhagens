@@ -1,10 +1,11 @@
 ﻿// Aumente o numero da versao ao publicar uma nova atualizacao do jogo
-const CACHE_VERSION = "forja-de-linhagens-v6";
+const CACHE_VERSION = "forja-de-linhagens-v7";
 const VIDEO_CACHE = "forja-de-linhagens-videos-v1";
 
 const CORE_ASSETS = [
   "./",
   "./index.html",
+  "./firebase-cloud.js",
   "./manifest.webmanifest"
 ];
 
@@ -417,11 +418,13 @@ self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // Nunca cachear chamadas externas (Firebase Auth/Firestore/Analytics/Google) nem rotas de auth
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith("/__/auth/") || url.pathname.startsWith("/__/firebase/")) return;
 
-  // Videos dos Deuses: nunca pre-carregados nem gravados automaticamente no fetch;
+  // Videos (intro e Deuses): nunca pre-carregados nem gravados automaticamente no fetch;
   // usa VIDEO_CACHE apenas se ja tiver sido assistido e salvo pela pagina
-  if (url.pathname.includes("/videos/")) {
+  if (url.pathname.includes("/videos/") || url.pathname.includes("/video/")) {
     event.respondWith(
       caches.open(VIDEO_CACHE).then(cache =>
         cache.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req))
@@ -430,8 +433,8 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Navegacao / index.html / manifest: rede primeiro (atualiza cache), fallback para cache offline
-  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/manifest.webmanifest")) {
+  // Navegacao / index.html / firebase-cloud.js / manifest: rede primeiro (atualiza cache), fallback para cache offline
+  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/firebase-cloud.js") || url.pathname.endsWith("/manifest.webmanifest")) {
     event.respondWith(
       fetch(req)
         .then(res => {

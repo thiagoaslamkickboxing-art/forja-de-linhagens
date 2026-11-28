@@ -12,6 +12,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
 <link rel="apple-touch-icon" href="img/icon-192.png">
 <title>Forja de Linhagens</title>
+<script type="module" src="firebase-cloud.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -40,7 +41,7 @@ canvas.ico{display:block}
 
 /* ---- fundo animado do menu ---- */
 #menuBg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;display:none;opacity:0;transition:opacity .9s ease}
-body.home #menuBg{display:block}
+body.splash #menuBg,body.login #menuBg,body.title #menuBg,body.home #menuBg{display:block}
 #menuBg.in{opacity:1}
 #menuBgImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;will-change:transform;animation:menuZoom 20s ease-in-out infinite}
 @keyframes menuZoom{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
@@ -533,6 +534,64 @@ body.home #home,body.game #game{display:flex}
 #oText{padding:6px 16px 4px;color:var(--parch)}
 #oUnl{padding:0 16px 12px;color:var(--gold);font-size:14px;line-height:1.35}
 .oBtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 16px}
+
+/* ---- fluxo inicial: splash, intro, login, menu inicial e nuvem ---- */
+#splashScr,#loginScr,#titleMenu{position:relative;z-index:2;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));text-align:center}
+body.splash #splashScr{display:flex;cursor:pointer}
+body.login #loginScr{display:flex}
+body.title #titleMenu{display:flex;justify-content:space-between}
+.spLogo{width:104px;height:104px;border-radius:22px;border:2px solid var(--gold);box-shadow:0 8px 28px #000b,0 0 24px #e4b54844;margin-bottom:14px;object-fit:cover}
+.spTitle{font-family:var(--display);font-size:clamp(34px,9vw,54px);line-height:1.02;color:var(--gold);text-shadow:0 3px 16px #000e,0 0 24px #e4b54855;margin-bottom:8px}
+.spSub{font-size:15px;color:#d9d4c4;text-shadow:0 1px 6px #000d;margin-bottom:28px}
+.spTap{font-size:16px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff4c2;text-shadow:0 2px 10px #000e;padding:10px 22px;border-radius:99px;border:1px solid #e4b54888;background:rgba(14,24,21,.68);animation:splashPulse 1.8s ease-in-out infinite}
+@keyframes splashPulse{0%,100%{opacity:.55;transform:scale(.97)}50%{opacity:1;transform:scale(1.03)}}
+@media (prefers-reduced-motion:reduce){.spTap{animation:none}}
+
+#introVidOv{position:fixed;inset:0;z-index:135;display:none;align-items:center;justify-content:center;background:#000;touch-action:none}
+#introVidOv.on{display:flex}
+#introVidEl{width:100%;height:100%;object-fit:cover;background:#000;pointer-events:none}
+#introVidSkip{position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;z-index:136;opacity:0;pointer-events:none;transition:opacity .28s ease;background:#09090ecc;border:1.5px solid #ffe680bb;color:#fff7d6;font-weight:700;padding:8px 14px;border-radius:99px;font-size:13px;letter-spacing:.04em}
+#introVidSkip.show{opacity:1;pointer-events:auto}
+
+.authCard{width:min(360px,100%);padding:22px 18px;border-radius:12px;background:rgba(16,28,24,.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1.5px solid var(--line);box-shadow:0 12px 34px #000a;display:flex;flex-direction:column;gap:12px}
+.authCard h2{font-family:var(--display);font-size:28px;color:var(--gold);line-height:1.05}
+.authCard p{font-size:14px;color:var(--dim);line-height:1.35}
+.authBtnG{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;border-radius:6px;background:#fff;color:#1f1f1f;font-weight:700;font-size:15px;border:1px solid #dadce0;box-shadow:0 2px 8px #0006}
+.authBtnG:disabled{opacity:.55;cursor:default}
+.authBtnGuest{padding:11px 16px;border-radius:6px;background:var(--moss2);color:var(--parch);border:1px solid var(--gold);font-weight:700;font-size:15px}
+.authMsg{font-size:13px;color:#ffb8a8;min-height:1.2em}
+
+.tmTop{width:min(440px,100%);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(16,28,24,.82);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid var(--line)}
+.tmUser{display:flex;align-items:center;gap:10px;min-width:0;text-align:left}
+.tmAv{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--gold);background:var(--moss2);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);overflow:hidden;flex:none;font-size:16px}
+.tmAv img{width:100%;height:100%;object-fit:cover;display:block}
+.tmUInfo{min-width:0}
+.tmUName{font-weight:700;font-size:15px;color:var(--parch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tmUSub{font-size:11px;color:var(--dim)}
+.cloudBadge{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);background:rgba(14,24,21,.85);color:var(--dim);flex:none}
+.cloudBadge.ok{border-color:#58b96a;color:#9ef0a8}
+.cloudBadge.sync{border-color:#5aa9ff;color:#9fd3ff}
+.cloudBadge.off{border-color:#a85a4a;color:#f0a89a}
+
+.tmCenter{display:flex;flex-direction:column;align-items:center;width:min(340px,100%);margin:auto 0;gap:10px}
+.tmBtns{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:8px}
+.tmBtns .btn{padding:13px 18px;font-size:17px;border-radius:8px;letter-spacing:.03em;box-shadow:0 4px 14px #0008}
+.tmBtns .btn.go{font-size:20px;padding:15px 18px}
+.tmFoot{font-size:12px;color:#b9c2b2;text-shadow:0 1px 4px #000c}
+
+.acctBox{padding:10px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.acctRow{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;background:var(--moss2);border:1px solid var(--line)}
+.acctMeta{font-size:12px;color:var(--dim);line-height:1.4}
+.acctWarn{padding:9px 11px;border-radius:6px;background:#3a1c18;border:1px solid #d0604a88;color:#ffd2c8;font-size:13px;line-height:1.35}
+.cfGrid{display:grid;grid-template-columns:1fr;gap:10px;padding:10px 16px 16px}
+.cfOpt{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:8px;background:var(--moss2);border:1.5px solid var(--line);text-align:left}
+.cfOpt b{font-size:16px;color:var(--gold)}
+.cfOpt .cfStats{font-size:13px;color:var(--parch);line-height:1.35}
+.cfOpt .cfDate{font-size:12px;color:var(--dim)}
+.credBody{padding:10px 16px 18px;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--parch);line-height:1.45}
+.credBody small{color:var(--dim)}
+.cfgBkRow{padding:10px;border-radius:6px;background:var(--moss2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.cfgBkRow small{font-size:12px;color:var(--dim)}
 </style>
 </head>
 <body class="home">
@@ -545,9 +604,60 @@ body.home #home,body.game #game{display:flex}
   <div id="menuTabShade"></div>
 </div>
 
+<section id="splashScr" role="button" tabindex="0" aria-label="Toque para começar">
+  <img class="spLogo" src="img/icon-192.png" alt="Forja de Linhagens">
+  <h1 class="spTitle">Forja de Linhagens</h1>
+  <div class="spSub">Funda heróis, desperte linhagens e defenda a muralha</div>
+  <div class="spTap">Toque para começar</div>
+</section>
+
+<div id="introVidOv" aria-modal="true" role="dialog">
+  <video id="introVidEl" playsinline webkit-playsinline preload="none"></video>
+  <button class="btn" id="introVidSkip" type="button">Pular ▸▸</button>
+</div>
+
+<section id="loginScr">
+  <div class="authCard">
+    <h2>Entrar na Forja</h2>
+    <p>Salve seu progresso na nuvem para continuar em qualquer aparelho, ou comece agora como convidado.</p>
+    <button type="button" class="authBtnG" id="bLoginGoogle">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5c-.3 1.5-1.1 2.7-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.2 0-5.9-2.1-6.8-5H1.2v3.1C3.2 21.3 7.3 24 12 24z"/><path fill="#FBBC05" d="M5.2 14.2c-.2-.7-.4-1.5-.4-2.2s.1-1.5.4-2.2V6.7H1.2C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C18 1.2 15.2 0 12 0 7.3 0 3.2 2.7 1.2 6.7l4 3.1c.9-2.9 3.6-5 6.8-5z"/></svg>
+      <span>Entrar com Google</span>
+    </button>
+    <button type="button" class="authBtnGuest" id="bLoginGuest">Jogar como convidado</button>
+    <div class="authMsg" id="loginMsg" role="status"></div>
+  </div>
+</section>
+
+<section id="titleMenu">
+  <div class="tmTop">
+    <button type="button" class="tmUser" id="tmUserBtn" title="Abrir Conta">
+      <div class="tmAv" id="tmAvatar">⚔</div>
+      <div class="tmUInfo">
+        <div class="tmUName" id="tmName">Convidado</div>
+        <div class="tmUSub" id="tmSub">Nível 1 · ★ 0</div>
+      </div>
+    </button>
+    <button type="button" class="cloudBadge off" id="tmCloud" title="Status do save na nuvem">☁✕</button>
+  </div>
+  <div class="tmCenter">
+    <img class="spLogo" src="img/icon-192.png" alt="Forja de Linhagens">
+    <h1 class="spTitle">Forja de Linhagens</h1>
+    <div class="tmBtns">
+      <button type="button" class="btn go" id="tmPlay">Jogar</button>
+      <button type="button" class="btn" id="tmAcct">Conta</button>
+      <button type="button" class="btn" id="tmCfg">Configurações</button>
+      <button type="button" class="btn" id="tmCred">Créditos</button>
+    </div>
+  </div>
+  <div class="tmFoot">Forja de Linhagens · PWA</div>
+</section>
+
 <section id="home" data-tab="F">
   <div class="top">
+    <button class="btn" id="hMenuBtn" aria-label="Menu Inicial" title="Menu Inicial">☰</button>
     <h1>Forja de Linhagens</h1>
+    <button class="cloudBadge off" id="hCloud" title="Status do save na nuvem">☁✕</button>
     <div class="coins" title="Moedas"><i></i><b class="num" id="hCoins">0</b></div>
     <div class="gems" title="Gemas"><svg class="gico" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 21,9 12,22 3,9" fill="#9b4dff" stroke="#2d0c57" stroke-width="1.8" stroke-linejoin="round"/><polygon points="12,2 16,9 12,22 8,9" fill="#c78bff" opacity=".7"/><polygon points="12,2 8,9 3,9" fill="#e9c8ff" opacity=".8"/><polygon points="12,2 21,9 16,9" fill="#6d22c9" opacity=".75"/></svg><b class="num" id="hGems">0</b></div>
     <button class="btn" id="hCodes">Códigos</button>
@@ -739,6 +849,14 @@ body.home #home,body.game #game{display:flex}
   <header><h2>Configurações</h2><button class="btn" id="cfgClose">Fechar</button></header>
   <div class="cfgBody">
     <div class="cfgRow">
+      <div class="cfgLbl"><span>Vídeo de abertura</span><small id="cfgIntroTxt">Só na primeira vez</small></div>
+      <div class="cfgSeg" id="cfgIntroSeg">
+        <button type="button" data-iv="always" aria-pressed="false">Sempre</button>
+        <button type="button" data-iv="first" aria-pressed="true">Só na primeira vez</button>
+        <button type="button" data-iv="off" aria-pressed="false">Nunca</button>
+      </div>
+    </div>
+    <div class="cfgRow">
       <div class="cfgLbl"><span>Cenas dos Deuses</span><small id="cfgVidTxt">Só na primeira vez</small></div>
       <div class="cfgSeg" id="cfgVidSeg">
         <button type="button" data-gv="always" aria-pressed="false">Sempre</button>
@@ -759,6 +877,62 @@ body.home #home,body.game #game{display:flex}
       </div>
     </div>
     <button class="btn" id="cfgSound" aria-pressed="true">Som: Ligado</button>
+    <div class="cfgBkRow">
+      <div class="cfgLbl"><span>Backup local de segurança</span></div>
+      <small id="cfgBkInfo">Nenhum backup salvo ainda.</small>
+      <button type="button" class="btn" id="cfgRestoreBk" disabled>Restaurar backup</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="sheet" id="acct"><div class="panel">
+  <header><h2>Conta e Nuvem</h2><button class="btn" id="acctClose">Fechar</button></header>
+  <div class="acctBox">
+    <div class="acctRow">
+      <div class="tmAv" id="acctAv">⚔</div>
+      <div class="tmUInfo">
+        <div class="tmUName" id="acctName">Convidado</div>
+        <div class="acctMeta" id="acctStatus">Verificando sessão...</div>
+      </div>
+    </div>
+    <div class="acctMeta" id="acctSyncInfo">Status da nuvem: —</div>
+    <div class="acctWarn" id="acctGuestWarn" hidden>Você está jogando como convidado. Vincule sua conta Google para proteger seu progresso em outros aparelhos.</div>
+    <button type="button" class="authBtnG" id="bLinkGoogle" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5c-.3 1.5-1.1 2.7-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.2 0-5.9-2.1-6.8-5H1.2v3.1C3.2 21.3 7.3 24 12 24z"/><path fill="#FBBC05" d="M5.2 14.2c-.2-.7-.4-1.5-.4-2.2s.1-1.5.4-2.2V6.7H1.2C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C18 1.2 15.2 0 12 0 7.3 0 3.2 2.7 1.2 6.7l4 3.1c.9-2.9 3.6-5 6.8-5z"/></svg>
+      <span>Vincular conta Google</span>
+    </button>
+    <button type="button" class="btn" id="bSyncNow">Sincronizar agora</button>
+    <button type="button" class="btn" id="bLogout" style="border-color:#d0604a;color:#ffb8a8">Sair</button>
+    <div class="authMsg" id="acctMsg" role="status"></div>
+  </div>
+</div></div>
+
+<div class="sheet" id="saveConflict"><div class="panel">
+  <header><h2>Escolher Progresso</h2></header>
+  <div class="cfGrid">
+    <div style="font-size:14px;color:var(--parch);line-height:1.35">Esta conta Google já possui um progresso salvo na nuvem. Escolha qual deseja manter (o outro será guardado no backup local):</div>
+    <div class="cfOpt">
+      <b>Save deste aparelho</b>
+      <div class="cfStats" id="cfLocalStats"></div>
+      <div class="cfDate" id="cfLocalDate"></div>
+      <button type="button" class="btn go" id="cfPickLocal">Manter save deste aparelho</button>
+    </div>
+    <div class="cfOpt">
+      <b>Save da nuvem</b>
+      <div class="cfStats" id="cfCloudStats"></div>
+      <div class="cfDate" id="cfCloudDate"></div>
+      <button type="button" class="btn go" id="cfPickCloud">Carregar save da nuvem</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="sheet" id="credits"><div class="panel">
+  <header><h2>Créditos</h2><button class="btn" id="credClose">Fechar</button></header>
+  <div class="credBody">
+    <div><b>Forja de Linhagens</b></div>
+    <div>Jogo de estratégia, defesa de muralha e fusão de heróis elementais.</div>
+    <div><small>Versão PWA · Progresso na nuvem com Firebase Auth & Firestore · Áudio procedural em Web Audio API.</small></div>
+    <div><small>Obrigado por jogar!</small></div>
   </div>
 </div></div>
 
@@ -1480,8 +1654,9 @@ function mergeP(s){
   if(s.shop&&typeof s.shop==="object"&&Number(s.shop.day)>=((P.shop&&P.shop.day)||0))P.shop={day:Number(s.shop.day),ref:Math.min(3,Math.max(0,Math.floor(Number(s.shop.ref)||0))),bought:{...(s.shop.bought||{})}};
   if(Array.isArray(s.codes))P.codes=[...new Set([...P.codes,...s.codes.map(String)])];
   if(s.cfg&&typeof s.cfg==="object"){
-    if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",sfxVol:1};
+    if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"};
     if(s.cfg.godVid==="always"||s.cfg.godVid==="first"||s.cfg.godVid==="off")P.cfg.godVid=s.cfg.godVid;
+    if(s.cfg.introVid==="always"||s.cfg.introVid==="first"||s.cfg.introVid==="off")P.cfg.introVid=s.cfg.introVid;
     if(s.cfg.sfxVol!=null&&!isNaN(Number(s.cfg.sfxVol)))P.cfg.sfxVol=Math.max(0,Math.min(1,Number(s.cfg.sfxVol)));if(s.cfg.fxq==="alto"||s.cfg.fxq==="medio"||s.cfg.fxq==="baixo")P.cfg.fxq=s.cfg.fxq;
   }
 }
@@ -1638,25 +1813,114 @@ const heroLvf=id=>Math.pow(1.12,((P.heroes[id]||{}).lv||1)-1);
 const heroPw=id=>RAR[C[id].rar].m*heroLvf(id);
 function foundVerCount(){let n=0;for(const id of FUSED){const f=P.foundR[id];if(f)for(const r of RAR_ORD)if(f[r])n++}return n}
 function schLegDone(s){const list=FUSED_BY_SCH[s];return list&&list.length>0&&list.every(id=>P.foundR[id]&&(P.foundR[id].L||P.foundR[id].S))}
-function persist(){
+const LS_META="forja-save-meta",LS_BACKUP="backup_save",LS_INTRO="forja-intro-seen",LS_LOGOUT="forja-logged-out";
+let hadExistingLocalSave=false;
+try{hadExistingLocalSave=!!localStorage.getItem(LS)}catch(e){}
+let localUpdatedAtMs=0,cloudDirty=false,cloudSyncTimer=0,cloudSyncing=false,cloudState="off",lastCloudSyncMs=0;
+try{const mt=JSON.parse(localStorage.getItem(LS_META)||"null");if(mt&&mt.updatedAtMs)localUpdatedAtMs=Number(mt.updatedAtMs)||0}catch(e){}
+function makeBlankP(){
+  return{xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],decks:[{name:"Deck 1",cards:[]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}],activeDeck:0,chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"}};
+}
+function saveMeta(ms,uid){
+  localUpdatedAtMs=ms||Date.now();
+  try{localStorage.setItem(LS_META,JSON.stringify({updatedAtMs:localUpdatedAtMs,uid:uid||""}))}catch(e){}
+}
+function totalStarsOf(sv){
+  if(!sv||!sv.stars)return 0;
+  let tot=0;
+  for(let r=0;r<REALMS.length;r++)for(let s=1;s<=10;s++){
+    const a=Number(sv.stars[r+"-"+s])||0,b=Number(sv.stars[r+"-"+s+"-h"])||0;
+    tot+=Math.max(a,b);
+  }
+  return tot;
+}
+function lvlOfXp(xpVal){let l=1,x=Math.max(0,Number(xpVal)||0);while(x>=25*l*(l+1))l++;return l}
+function fmtDateBR(ms){
+  if(!ms)return"Sem data";
+  try{return new Date(ms).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}catch(e){return String(ms)}
+}
+function saveSummary(sv,ms){
+  const lv=lvlOfXp(sv&&sv.xp),st=totalStarsOf(sv),hs=sv&&sv.heroes?Object.keys(sv.heroes).length:0;
+  return{lv,st,hs,date:fmtDateBR(ms)};
+}
+function saveBackup(dataObj,reason){
+  if(!dataObj||typeof dataObj!=="object")return;
+  try{
+    localStorage.setItem(LS_BACKUP,JSON.stringify({savedAt:Date.now(),reason:reason||"substituicao",data:JSON.parse(JSON.stringify(dataObj))}));
+  }catch(e){}
+}
+function getBackup(){
+  try{const b=JSON.parse(localStorage.getItem(LS_BACKUP)||"null");return b&&b.data?b:null}catch(e){return null}
+}
+function replaceLocalSave(newData,ms,backupReason){
+  if(backupReason)saveBackup(P,backupReason);
+  P=makeBlankP();
+  mergeP(newData);
+  ensureStart();
   try{localStorage.setItem(LS,JSON.stringify(P))}catch(e){}
-  if(!docRef)return;
-  if(saving){dirty=true;return}
-  saving=true;dirty=false;
-  docRef.set(JSON.parse(JSON.stringify({v:2,...P}))).catch(()=>{}).then(()=>{saving=false;if(dirty)persist()});
+  saveMeta(ms||Date.now(),window.CLOUD&&window.CLOUD.getUser()?window.CLOUD.getUser().uid:"");
+  if(typeof syncCfgUI==="function")syncCfgUI();
+  if(typeof updateTitleUserUI==="function")updateTitleUserUI();
+  if(document.body.classList.contains("home")&&typeof renderHome==="function")renderHome();
+}
+function setCloudBadge(state){
+  cloudState=state;
+  const txt=state==="ok"?"☁✓":state==="sync"?"☁⟳":"☁✕";
+  const tip=state==="ok"?"Salvo na nuvem":state==="sync"?"Sincronizando com a nuvem...":"Offline (salvo neste aparelho)";
+  for(const id of["tmCloud","hCloud"]){
+    const el=$(id);if(!el)continue;
+    el.textContent=txt;el.title=tip;
+    el.classList.remove("ok","sync","off");
+    el.classList.add(state);
+  }
+  const si=$("acctSyncInfo");
+  if(si){
+    si.textContent="Nuvem: "+(state==="ok"?"Sincronizado"+(lastCloudSyncMs?" ("+fmtDateBR(lastCloudSyncMs)+")":""):state==="sync"?"Sincronizando...":"Offline / aguardando conexão");
+  }
+}
+function scheduleCloudSync(delayMs){
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer=setTimeout(()=>{syncCloudNow()},delayMs||450);
+}
+async function syncCloudNow(force){
+  if(!force&&!cloudDirty)return false;
+  const cl=window.CLOUD;
+  if(!cl||!cl.available||!navigator.onLine){setCloudBadge("off");return false}
+  const u=cl.getUser();
+  if(!u){setCloudBadge("off");return false}
+  if(cloudSyncing){cloudDirty=true;return false}
+  cloudSyncing=true;cloudDirty=false;
+  setCloudBadge("sync");
+  try{
+    const ts=localUpdatedAtMs||Date.now();
+    await cl.saveCloud(u.uid,P,ts);
+    lastCloudSyncMs=Date.now();
+    saveMeta(ts,u.uid);
+    setCloudBadge("ok");
+    return true;
+  }catch(e){
+    cloudDirty=true;
+    setCloudBadge("off");
+    return false;
+  }finally{
+    cloudSyncing=false;
+  }
+}
+function persist(syncNow){
+  try{localStorage.setItem(LS,JSON.stringify(P))}catch(e){}
+  const uid=window.CLOUD&&window.CLOUD.getUser()?window.CLOUD.getUser().uid:"";
+  saveMeta(Date.now(),uid);
+  cloudDirty=true;
+  if(syncNow)scheduleCloudSync(450);
 }
 try{mergeP(JSON.parse(localStorage.getItem(LS)||"null"))}catch(e){}
 ensureStart();
-(async()=>{
-  if(!window.claude||!window.claude.use)return;
-  try{
-    const[db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
-    const uid=user?await user.id():null;if(!db||!uid)return;
-    const ref=db.doc("data/users/"+uid+"/progresso");
-    const snap=await ref.get();if(snap&&snap.exists){mergeP(snap.data());ensureStart()}
-    docRef=ref;persist();if(document.body.classList.contains("home"))renderHome();
-  }catch(e){}
-})();
+if(hadExistingLocalSave&&!localUpdatedAtMs)saveMeta(Date.now(),"");
+// Sincronização periódica a cada 60 s se houver mudança (nunca a cada frame)
+setInterval(()=>{if(cloudDirty)syncCloudNow(false)},60000);
+window.addEventListener("online",()=>{if(cloudDirty||cloudState==="off")syncCloudNow(true)});
+window.addEventListener("offline",()=>{setCloudBadge("off")});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&cloudDirty)syncCloudNow(false)});
 const need=l=>25*(l-1)*l;                       // XP acumulado para chegar ao nível l
 function plvl(){let l=1;while(P.xp>=need(l+1))l++;return l}
 const dmgBonus=()=>0.04*(plvl()-1);
@@ -1668,15 +1932,56 @@ function unlocksAt(l){
 
 /* ================= som e cenas de vídeo ================= */
 let AC=null,master=null,muted=false,NB=null,musicDucked=false;const lastS={};
-function getCfg(){if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",sfxVol:1,fxq:"alto"};if(!["always","first","off"].includes(P.cfg.godVid))P.cfg.godVid="first";if(P.cfg.sfxVol==null||isNaN(P.cfg.sfxVol))P.cfg.sfxVol=1;if(!["alto","medio","baixo"].includes(P.cfg.fxq))P.cfg.fxq="alto";return P.cfg}
+function getCfg(){if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"};if(!["always","first","off"].includes(P.cfg.godVid))P.cfg.godVid="first";if(!["always","first","off"].includes(P.cfg.introVid))P.cfg.introVid="first";if(P.cfg.sfxVol==null||isNaN(P.cfg.sfxVol))P.cfg.sfxVol=1;if(!["alto","medio","baixo"].includes(P.cfg.fxq))P.cfg.fxq="alto";return P.cfg}
 function applyAudioVol(){
   const vol=Math.max(0,Math.min(1,getCfg().sfxVol));
   const duck=musicDucked?0.15:1;
   if(master&&AC){
     try{master.gain.setTargetAtTime(muted?0:0.3*vol*duck,AC.currentTime,0.05)}catch(e){master.gain.value=muted?0:0.3*vol*duck}
   }
-  const ve=$("godVidEl");
-  if(ve){ve.muted=!!muted;ve.volume=muted?0:vol}
+  if(menuMusGain&&AC){
+    try{menuMusGain.gain.setTargetAtTime(muted?0:0.14*vol*duck,AC.currentTime,0.12)}catch(e){menuMusGain.gain.value=muted?0:0.14*vol*duck}
+  }
+  for(const vidId of["godVidEl","introVidEl"]){
+    const ve=$(vidId);
+    if(ve){ve.muted=!!muted;ve.volume=muted?0:vol}
+  }
+}
+// Música ambiente suave do menu em Web Audio API (modo Dórico medieval)
+let menuMusTimer=0,menuMusGain=null,menuMusStep=0,menuMusOn=false;
+const MENU_NOTES=[293.66,349.23,440.00,329.63,261.63,329.63,392.00,349.23,293.66,440.00,523.25,440.00,392.00,349.23,329.63,293.66];
+function playMenuNote(){
+  if(!menuMusOn||!AC||muted||AC.state!=="running")return;
+  try{
+    if(!menuMusGain){menuMusGain=AC.createGain();menuMusGain.gain.value=0.14*getCfg().sfxVol*(musicDucked?0.15:1);menuMusGain.connect(AC.destination)}
+    const now=AC.currentTime,f=MENU_NOTES[menuMusStep%MENU_NOTES.length];
+    menuMusStep++;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type="triangle";o.frequency.setValueAtTime(f,now);
+    g.gain.setValueAtTime(0.0001,now);
+    g.gain.linearRampToValueAtTime(0.28,now+0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001,now+1.35);
+    o.connect(g);g.connect(menuMusGain);o.start(now);o.stop(now+1.4);
+    if(menuMusStep%4===1){
+      const b=AC.createOscillator(),bg=AC.createGain();
+      b.type="sine";b.frequency.setValueAtTime(f/2,now);
+      bg.gain.setValueAtTime(0.0001,now);
+      bg.gain.linearRampToValueAtTime(0.22,now+0.2);
+      bg.gain.exponentialRampToValueAtTime(0.0001,now+2.4);
+      b.connect(bg);bg.connect(menuMusGain);b.start(now);b.stop(now+2.45);
+    }
+  }catch(e){}
+}
+function startMenuMusic(){
+  if(menuMusOn)return;
+  menuMusOn=true;
+  playMenuNote();
+  clearInterval(menuMusTimer);
+  menuMusTimer=setInterval(playMenuNote,780);
+}
+function stopMenuMusic(){
+  menuMusOn=false;
+  clearInterval(menuMusTimer);menuMusTimer=0;
 }
 function duckMusic(on){
   musicDucked=!!on;
@@ -1836,6 +2141,7 @@ function playGodVideo(c,opts){
   }catch(e){cleanup("error")}
 }
 const CFG_VID_LBL={always:"Sempre",first:"Só na primeira vez",off:"Desativadas"};
+const CFG_INTRO_LBL={always:"Sempre",first:"Só na primeira vez",off:"Nunca"};
 // Qualidade de efeitos editável: trail = cópias do rastro, part = fração de partículas, shake = força do tremor, max = limite no pool
 const FXQ_CFG={
   alto:{n:"Alto",trail:3,part:1,shake:1,max:120},
@@ -1846,6 +2152,8 @@ let FXQ=FXQ_CFG.alto;
 function applyFxq(){FXQ=FXQ_CFG[getCfg().fxq]||FXQ_CFG.alto}
 function syncCfgUI(){
   const cf=getCfg();applyFxq();
+  const it=$("cfgIntroTxt");if(it)it.textContent=CFG_INTRO_LBL[cf.introVid]||"Só na primeira vez";
+  document.querySelectorAll("#cfgIntroSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.iv===cf.introVid));
   const t=$("cfgVidTxt");if(t)t.textContent=CFG_VID_LBL[cf.godVid]||"Só na primeira vez";
   document.querySelectorAll("#cfgVidSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.gv===cf.godVid));
   const ft=$("cfgFxTxt");if(ft)ft.textContent=FXQ.n;
@@ -1854,12 +2162,34 @@ function syncCfgUI(){
   if(vr)vr.value=String(Math.round(cf.sfxVol*100));
   if(vt)vt.textContent=Math.round(cf.sfxVol*100)+"%";
   const cs=$("cfgSound");if(cs){cs.setAttribute("aria-pressed",!muted);cs.textContent=muted?"Som: Mudo":"Som: Ligado"}
+  const bk=getBackup(),bki=$("cfgBkInfo"),bkb=$("cfgRestoreBk");
+  if(bki&&bkb){
+    if(bk){
+      const sm=saveSummary(bk.data,bk.savedAt);
+      bki.textContent="Backup disponível: Nível "+sm.lv+" · ★ "+sm.st+" · "+sm.date;
+      bkb.disabled=false;
+    }else{
+      bki.textContent="Nenhum backup salvo ainda.";
+      bkb.disabled=true;
+    }
+  }
 }
 function openCfg(){syncCfgUI();$("cfg").classList.add("on")}
 $("hCfg").onclick=openCfg;
 $("bCfg").onclick=()=>{$("pause").classList.remove("on");openCfg()};
 $("cfgClose").onclick=()=>$("cfg").classList.remove("on");
 $("cfg").onclick=e=>{if(e.target===$("cfg"))$("cfg").classList.remove("on")};
+document.querySelectorAll("#cfgIntroSeg button").forEach(b=>{
+  b.onclick=()=>{getCfg().introVid=b.dataset.iv;persist();syncCfgUI();sfx("summon")};
+});
+$("cfgRestoreBk").onclick=()=>{
+  const bk=getBackup();if(!bk)return;
+  const sm=saveSummary(bk.data,bk.savedAt);
+  if(!confirm("Restaurar backup (Nível "+sm.lv+", ★ "+sm.st+", "+sm.date+")? Seu progresso atual será guardado como novo backup."))return;
+  replaceLocalSave(bk.data,Date.now(),"restore");
+  cloudDirty=true;syncCloudNow(true);
+  sfx("discover");hToast("Backup restaurado!");
+};
 document.querySelectorAll("#cfgVidSeg button").forEach(b=>{
   b.onclick=()=>{getCfg().godVid=b.dataset.gv;persist();syncCfgUI();sfx("summon")};
 });
@@ -2782,7 +3112,7 @@ function finishChallenge(won){
     }
   }
   P.coins+=coins;P.gems+=gems;for(const k of chests)P.chests[k]++;
-  P.xp+=gain;persist();
+  P.xp+=gain;persist(true);
   const after=plvl(),unl=[];for(let l=before+1;l<=after;l++)unl.push(...unlocksAt(l));
   sfx(won?"win":"over");
   $("oTitle").textContent=won?(m==="weekly"&&ph.step<2?"Etapa concluída!":"Desafio vencido!"):(m==="onehp"?"1 PV perdido":"Derrota no desafio");
@@ -2848,7 +3178,7 @@ function finish(won){
   if(endless)for(let i=0;i<Math.min(3,Math.floor((G.wave-1)/5));i++)ch.push("m");
   P.coins+=coins;for(const k of ch)P.chests[k]++;
   $("oRew").textContent="+"+coins+" moedas"+(gemsGain?" · +"+gemsGain+" gemas":"")+(ch.length?" · "+ch.map(k=>CHESTS[k].n).join(", "):"")+".";
-  P.xp+=gain;persist();
+  P.xp+=gain;persist(true);
   const after=plvl(),unl=[];for(let l=before+1;l<=after;l++)unl.push(...unlocksAt(l));
   sfx(won?"win":"over");
   $("oTitle").textContent=won?"Fase concluída":endless?"A fenda venceu":"A muralha caiu";
@@ -4837,7 +5167,7 @@ function renderShop(){
         if(btn.disabled)return;
         P.gems-=spOffer.price;
         const isNew=grantHeroCards(spOffer.id,1);
-        st2.bought.sp=1;shopPop="sp";track("shopBuys");persist();sfx(isNew?"win":"buy");
+        st2.bought.sp=1;shopPop="sp";track("shopBuys");persist(true);sfx(isNew?"win":"buy");
         hToast(isNew?c.n+" desbloqueado!":"+1 carta de "+c.n+"!");
         renderHome();
       };
@@ -4872,7 +5202,7 @@ function renderShop(){
         if(btn.disabled)return;
         if(o.cur==="g")P.gems-=o.price;else P.coins-=o.price;
         const isNew=grantHeroCards(o.id,o.qty);
-        st2.bought[idx]=1;shopPop="d"+idx;track("shopBuys");persist();sfx(isNew?"win":"buy");
+        st2.bought[idx]=1;shopPop="d"+idx;track("shopBuys");persist(true);sfx(isNew?"win":"buy");
         hToast(isNew?c.n+" desbloqueado!":"+"+o.qty+" cartas de "+c.n+"!");
         renderHome();
       };
@@ -4887,7 +5217,7 @@ function renderShop(){
       btn.onclick=()=>{
         if(btn.disabled)return;
         if(o.cur==="g")P.gems-=o.price;else P.coins-=o.price;
-        P.chests[o.t]++;st2.bought[idx]=1;shopPop="d"+idx;track("shopBuys");persist();sfx("buy");
+        P.chests[o.t]++;st2.bought[idx]=1;shopPop="d"+idx;track("shopBuys");persist(true);sfx("buy");
         hToast("+1 "+ch.n+" (abra na aba Baús)!");
         renderHome();
       };
@@ -4918,7 +5248,7 @@ function renderShop(){
       btn.onclick=()=>{
         if(btn.disabled)return;
         if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;
-        P.chests[t]++;shopPop="f"+t;track("shopBuys");persist();sfx("buy");
+        P.chests[t]++;shopPop="f"+t;track("shopBuys");persist(true);sfx("buy");
         hToast("+1 "+ch.n+"!");renderHome();
       };
     }
@@ -4931,7 +5261,7 @@ function renderShop(){
   const exMt=document.createElement("div");exMt.className="mt";exMt.textContent="Troque 10 gemas por 500 moedas.";
   exTx.append(exNm,exMt);
   const exBtn=document.createElement("button");exBtn.className="btn go";exBtn.append(curIco("g"),"10");exBtn.disabled=P.gems<10;
-  exBtn.onclick=()=>{if(exBtn.disabled)return;P.gems-=10;P.coins+=500;shopPop="ex";track("shopBuys");persist();sfx("buy");hToast("+500 moedas!");renderHome()};
+  exBtn.onclick=()=>{if(exBtn.disabled)return;P.gems-=10;P.coins+=500;shopPop="ex";track("shopBuys");persist(true);sfx("buy");hToast("+500 moedas!");renderHome()};
   ex.append(exIco,exTx,exBtn);fix.appendChild(ex);
   shopPop=null;
 }
@@ -4955,7 +5285,7 @@ function renderChests(){
     }else{
       b.append("Comprar ",curIco(ch.cur),String(ch.price));
       const can=(ch.cur==="g"?P.gems:P.coins)>=ch.price;b.disabled=!can;
-      b.onclick=()=>{if(b.disabled)return;if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;P.chests[t]++;persist();sfx("buy");hToast("+1 "+ch.n+"!");renderHome()};
+      b.onclick=()=>{if(b.disabled)return;if(ch.cur==="g")P.gems-=ch.price;else P.coins-=ch.price;P.chests[t]++;persist(true);sfx("buy");hToast("+1 "+ch.n+"!");renderHome()};
     }
     bt.append(o,b);row.append(drawChest(t,64),tx,bt);box.appendChild(row)}
   $("tbN").textContent=tot||"";
@@ -4990,7 +5320,7 @@ function openChest(t){
   const rows=[];
   for(const id in got){let n=got[id],isNew=false;if(!P.heroes[id]){P.heroes[id]={lv:1,cards:0};updateBestRar(id,C[id].rar);isNew=true;n--;if(P.deck.length<6)P.deck.push(id)}P.heroes[id].cards+=n;rows.push({id,n,isNew})}
   rows.sort((a,b)=>"CREL".indexOf(C[b.id].rar)-"CREL".indexOf(C[a.id].rar));
-  P.coins+=coins;persist();sfx(rows.some(r=>r.isNew)?"win":"discover");
+  P.coins+=coins;persist(true);sfx(rows.some(r=>r.isNew)?"win":"discover");
   $("lootName").textContent=ch.n;const list=$("lootList");list.textContent="";
   rows.forEach((r,i)=>{const c=C[r.id],el=document.createElement("div");el.className="lt";el.style.borderLeftColor=RAR[c.rar].c;el.style.animationDelay=(i*0.18)+"s";
     const tx=document.createElement("div"),n=document.createElement("div");n.className="n";n.textContent=c.n;const d=document.createElement("div");d.className="d";d.style.color=RAR[c.rar].c;d.textContent=RAR[c.rar].n+(r.n>0?" · +"+r.n+" cartas":"");tx.append(n,d);el.append(icon(c,48),tx);
@@ -5691,9 +6021,9 @@ function stepMenuBg(dt){
   }
   c.globalCompositeOperation="source-over";
 }
-window.addEventListener("resize",()=>{if(document.body.classList.contains("home"))initMenuBgFx()});
+window.addEventListener("resize",()=>{if(document.body.className!=="game")initMenuBgFx()});
 if(mRedMQ&&mRedMQ.addEventListener)mRedMQ.addEventListener("change",initMenuBgFx);
-function goHome(){G=null;sel=null;openLinTip=null;if($("linTip"))$("linTip").classList.remove("on");$("over").classList.remove("on");$("pause").classList.remove("on");$("tipc").classList.remove("on");$("pre").classList.remove("on");document.body.className="home";renderHome();applyMenuTabBg($("home").dataset.tab);showMenuBg(true)}
+function goHome(){G=null;sel=null;openLinTip=null;if($("linTip"))$("linTip").classList.remove("on");$("over").classList.remove("on");$("pause").classList.remove("on");$("tipc").classList.remove("on");$("pre").classList.remove("on");document.body.className="home";renderHome();applyMenuTabBg($("home").dataset.tab);showMenuBg(true);startMenuMusic()}
 function startPhase(spec,snap){
   const sp=normSpec(spec);
   syncActiveDeck();
@@ -5706,6 +6036,7 @@ function startPhase(spec,snap){
     if(chk.chal&&chk.chal.k==="twoSch"&&deckSchools()>2&&!snap){curRealm=sp.r;curHard=sp.hard;goHome();openPre(sp.r,sp.s,sp.hard);return}
     curRealm=sp.r;curHard=sp.hard;
   }
+  stopMenuMusic();
   G=fresh(sp);sel=null;drag=null;SPR.clear();
   $("menuBg").classList.remove("in");
   document.body.className="game";
@@ -5953,14 +6284,307 @@ function frame(t){
   }
 }
 setInterval(()=>{if(!document.body.classList.contains("home"))return;const el=$("shopTimer");if(el)el.textContent=fmtMidnight();updateChalTimers();if(P.shop&&P.shop.day!==today())renderHome()},1000);
+/* ================= fluxo inicial, intro, login e conta ================= */
+function waitCloudReady(timeoutMs){
+  return new Promise(res=>{
+    let done=false;
+    const finish=val=>{if(done)return;done=true;res(val)};
+    const tm=setTimeout(()=>finish(null),timeoutMs||3500);
+    const attach=cl=>{
+      if(!cl||!cl.ready){clearTimeout(tm);finish(null);return}
+      cl.ready.then(v=>{clearTimeout(tm);finish(v)}).catch(()=>{clearTimeout(tm);finish(null)});
+    };
+    if(window.CLOUD)attach(window.CLOUD);
+    else window.addEventListener("forja-cloud-ready",e=>attach(e.detail),{once:true});
+  });
+}
+function renderAvatar(el,user){
+  if(!el)return;
+  el.textContent="";
+  if(user&&user.photoURL){
+    const img=document.createElement("img");img.src=user.photoURL;img.alt="";img.referrerPolicy="no-referrer";
+    img.onerror=()=>{el.textContent="⚔"};
+    el.appendChild(img);
+  }else{
+    el.textContent=user&&!user.isAnonymous?(user.displayName||"J").charAt(0).toUpperCase():"⚔";
+  }
+}
+function updateTitleUserUI(){
+  const u=window.CLOUD?window.CLOUD.getUser():null;
+  const nm=u?(u.displayName||(u.isAnonymous?"Convidado":"Jogador")):"Convidado (offline)";
+  const elNm=$("tmName");if(elNm)elNm.textContent=nm;
+  const elSub=$("tmSub");if(elSub)elSub.textContent="Nível "+plvl()+" · ★ "+totalStarsOf(P);
+  renderAvatar($("tmAvatar"),u);
+  const aNm=$("acctName");if(aNm)aNm.textContent=nm;
+  renderAvatar($("acctAv"),u);
+  const aSt=$("acctStatus");
+  if(aSt){
+    if(!u)aSt.textContent="Modo offline local (sem sessão na nuvem)";
+    else if(u.isAnonymous)aSt.textContent="Convidado (anônimo) · uid "+u.uid.slice(0,8)+"…";
+    else aSt.textContent="Conta Google conectada · uid "+u.uid.slice(0,8)+"…";
+  }
+  const gw=$("acctGuestWarn"),bl=$("bLinkGoogle");
+  const isGuest=!u||u.isAnonymous;
+  if(gw)gw.hidden=!isGuest;
+  if(bl)bl.hidden=!isGuest;
+}
+function openTitleMenu(){
+  G=null;sel=null;
+  document.body.className="title";
+  applyMenuTabBg("");
+  showMenuBg(true);
+  updateTitleUserUI();
+  setCloudBadge(cloudState);
+  startMenuMusic();
+}
+function openLoginScreen(msg){
+  G=null;sel=null;
+  document.body.className="login";
+  applyMenuTabBg("");
+  showMenuBg(true);
+  if($("loginMsg"))$("loginMsg").textContent=msg||"";
+}
+function openSaveConflict(localObj,localMs,cloudObj,cloudMs){
+  return new Promise(resolve=>{
+    const ls=saveSummary(localObj,localMs),cs=saveSummary(cloudObj,cloudMs);
+    $("cfLocalStats").textContent="Nível "+ls.lv+" · ★ "+ls.st+" estrelas · "+ls.hs+" heróis";
+    $("cfLocalDate").textContent="Atualizado em: "+ls.date;
+    $("cfCloudStats").textContent="Nível "+cs.lv+" · ★ "+cs.st+" estrelas · "+cs.hs+" heróis";
+    $("cfCloudDate").textContent="Atualizado em: "+cs.date;
+    const ov=$("saveConflict");
+    const choose=pick=>{
+      ov.classList.remove("on");
+      $("cfPickLocal").onclick=null;$("cfPickCloud").onclick=null;
+      resolve(pick);
+    };
+    $("cfPickLocal").onclick=()=>choose("local");
+    $("cfPickCloud").onclick=()=>choose("cloud");
+    ov.classList.add("on");
+  });
+}
+function hasRealProgress(sv){
+  if(!sv)return false;
+  return (Number(sv.xp)||0)>0||totalStarsOf(sv)>0||(sv.st&&(sv.st.wins||0)>0)||Object.keys(sv.heroes||{}).length>4;
+}
+async function syncAfterAuth(user,askConflict){
+  if(!user||!window.CLOUD||!navigator.onLine){setCloudBadge("off");updateTitleUserUI();return}
+  setCloudBadge("sync");
+  try{
+    const remote=await window.CLOUD.loadSave(user.uid);
+    if(remote&&remote.exists&&remote.data){
+      if(askConflict&&hasRealProgress(P)){
+        const choice=await openSaveConflict(P,localUpdatedAtMs,remote.data,remote.updatedAtMs);
+        if(choice==="cloud"){
+          replaceLocalSave(remote.data,remote.updatedAtMs,"conflito-google");
+          lastCloudSyncMs=Date.now();cloudDirty=false;setCloudBadge("ok");
+        }else{
+          saveBackup(remote.data,"conflito-google-nuvem");
+          cloudDirty=true;await syncCloudNow(true);
+        }
+      }else if(remote.updatedAtMs>(localUpdatedAtMs||0)+1500||(!hasRealProgress(P)&&hasRealProgress(remote.data))){
+        replaceLocalSave(remote.data,remote.updatedAtMs,"sync-nuvem-mais-nova");
+        lastCloudSyncMs=Date.now();cloudDirty=false;setCloudBadge("ok");
+      }else{
+        if(remote.data&&JSON.stringify(remote.data)!==JSON.stringify(P))saveBackup(remote.data,"sync-local-mais-novo");
+        cloudDirty=true;await syncCloudNow(true);
+      }
+    }else{
+      cloudDirty=true;await syncCloudNow(true);
+    }
+  }catch(e){
+    setCloudBadge("off");
+  }
+  updateTitleUserUI();
+}
+function shouldPlayIntro(){
+  const mode=getCfg().introVid||"first";
+  if(mode==="off")return false;
+  if(mode==="always")return true;
+  try{return !localStorage.getItem(LS_INTRO)}catch(e){return true}
+}
+function playIntroVideo(onDone){
+  if(!shouldPlayIntro()){onDone();return}
+  const ov=$("introVidOv"),ve=$("introVidEl"),skip=$("introVidSkip");
+  if(!ov||!ve){onDone();return}
+  let finished=false,skipT=0,loadT=0,started=false;
+  const done=()=>{
+    if(finished)return;
+    finished=true;
+    clearTimeout(skipT);clearTimeout(loadT);
+    ve.onended=null;ve.onerror=null;ve.onplaying=null;skip.onclick=null;
+    try{ve.pause();ve.removeAttribute("src");ve.load()}catch(e){}
+    skip.classList.remove("show");ov.classList.remove("on");
+    try{localStorage.setItem(LS_INTRO,"1")}catch(e){}
+    onDone();
+  };
+  skip.classList.remove("show");
+  ov.classList.add("on");
+  ve.muted=!!muted;
+  ve.volume=muted?0:Math.max(0,Math.min(1,getCfg().sfxVol));
+  ve.currentTime=0;
+  ve.src="video/intro.mp4";
+  ve.onplaying=()=>{started=true;clearTimeout(loadT)};
+  ve.onended=done;
+  ve.onerror=done;
+  skip.onclick=e=>{e.stopPropagation();done()};
+  skipT=setTimeout(()=>{if(!finished)skip.classList.add("show")},1000);
+  loadT=setTimeout(()=>{if(!finished&&!started)done()},3500);
+  try{
+    const pr=ve.play();
+    if(pr&&typeof pr.catch==="function")pr.catch(done);
+  }catch(e){done()}
+}
+async function proceedAfterIntro(){
+  const res=await waitCloudReady(3500);
+  const cl=window.CLOUD;
+  const redir=cl&&cl.consumeRedirectEvent?cl.consumeRedirectEvent():null;
+  let user=cl?cl.getUser():null;
+  if(redir&&redir.type==="credential-in-use"&&redir.user){
+    await syncAfterAuth(redir.user,true);
+    openTitleMenu();return;
+  }
+  if(redir&&redir.type==="redirect-ok"&&redir.user){
+    await syncAfterAuth(redir.user,true);
+    openTitleMenu();return;
+  }
+  if(user){
+    try{localStorage.removeItem(LS_LOGOUT)}catch(e){}
+    await syncAfterAuth(user,false);
+    openTitleMenu();return;
+  }
+  // Migração: quem já joga (save local existente) entra automaticamente como convidado sem perder nada
+  let explicitLogout=false;
+  try{explicitLogout=!!localStorage.getItem(LS_LOGOUT)}catch(e){}
+  if(hadExistingLocalSave&&!explicitLogout){
+    if(cl&&navigator.onLine){
+      try{
+        user=await cl.signInGuest();
+        await syncAfterAuth(user,false);
+      }catch(e){setCloudBadge("off")}
+    }else{
+      setCloudBadge("off");
+    }
+    openTitleMenu();return;
+  }
+  openLoginScreen("");
+}
+let splashTriggered=false;
+function onSplashTap(){
+  if(splashTriggered||!document.body.classList.contains("splash"))return;
+  splashTriggered=true;
+  audioOn();
+  sfx("summon");
+  playIntroVideo(()=>{proceedAfterIntro()});
+}
+$("splashScr").addEventListener("click",onSplashTap);
+$("splashScr").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onSplashTap()}});
+
+$("bLoginGoogle").onclick=async()=>{
+  const btn=$("bLoginGoogle"),msg=$("loginMsg");
+  if(!window.CLOUD){msg.textContent="Serviço de login indisponível offline. Entre como convidado.";return}
+  btn.disabled=true;msg.textContent="Conectando com o Google...";
+  try{
+    const out=await window.CLOUD.signInGoogle();
+    if(out.redirected)return;
+    try{localStorage.removeItem(LS_LOGOUT)}catch(e){}
+    await syncAfterAuth(out.user,true);
+    openTitleMenu();
+  }catch(err){
+    const code=err&&err.code?err.code:"";
+    msg.textContent=code==="auth/popup-closed-by-user"?"Login cancelado.":("Falha ao entrar com Google ("+(code||"erro")+").");
+  }finally{btn.disabled=false}
+};
+$("bLoginGuest").onclick=async()=>{
+  const btn=$("bLoginGuest"),msg=$("loginMsg");
+  btn.disabled=true;msg.textContent="Entrando como convidado...";
+  try{
+    try{localStorage.removeItem(LS_LOGOUT)}catch(e){}
+    if(window.CLOUD&&navigator.onLine){
+      const u=await window.CLOUD.signInGuest();
+      await syncAfterAuth(u,false);
+    }else{
+      setCloudBadge("off");
+    }
+    openTitleMenu();
+  }catch(err){
+    setCloudBadge("off");
+    openTitleMenu();
+  }finally{btn.disabled=false}
+};
+
+function openAccount(){
+  updateTitleUserUI();
+  setCloudBadge(cloudState);
+  if($("acctMsg"))$("acctMsg").textContent="";
+  $("acct").classList.add("on");
+}
+$("tmPlay").onclick=()=>{sfx("summon");goHome()};
+$("tmAcct").onclick=()=>{sfx("summon");openAccount()};
+$("tmUserBtn").onclick=()=>{sfx("summon");openAccount()};
+$("tmCloud").onclick=()=>{sfx("summon");openAccount()};
+$("hCloud").onclick=()=>{sfx("summon");openAccount()};
+$("hMenuBtn").onclick=()=>{sfx("summon");openTitleMenu()};
+$("tmCfg").onclick=()=>{sfx("summon");openCfg()};
+$("tmCred").onclick=()=>{sfx("summon");$("credits").classList.add("on")};
+$("acctClose").onclick=()=>$("acct").classList.remove("on");
+$("acct").onclick=e=>{if(e.target===$("acct"))$("acct").classList.remove("on")};
+$("credClose").onclick=()=>$("credits").classList.remove("on");
+$("credits").onclick=e=>{if(e.target===$("credits"))$("credits").classList.remove("on")};
+$("bSyncNow").onclick=async()=>{
+  const msg=$("acctMsg");
+  msg.textContent="Sincronizando...";
+  const ok=await syncCloudNow(true);
+  msg.textContent=ok?"Salvo na nuvem com sucesso!":"Sem conexão ou sem sessão ativa.";
+};
+$("bLinkGoogle").onclick=async()=>{
+  const btn=$("bLinkGoogle"),msg=$("acctMsg");
+  if(!window.CLOUD){msg.textContent="Indisponível offline.";return}
+  btn.disabled=true;msg.textContent="Vinculando conta Google...";
+  try{
+    const out=await window.CLOUD.linkGoogle();
+    if(out.redirected)return;
+    if(out.alreadyInUse){
+      await syncAfterAuth(out.user,true);
+      msg.textContent="Conta Google conectada!";
+    }else{
+      cloudDirty=true;
+      await syncCloudNow(true);
+      updateTitleUserUI();
+      msg.textContent="Conta Google vinculada mantendo seu progresso!";
+      sfx("win");
+    }
+  }catch(err){
+    const code=err&&err.code?err.code:"";
+    msg.textContent=code==="auth/popup-closed-by-user"?"Operação cancelada.":("Não foi possível vincular ("+(code||"erro")+").");
+  }finally{btn.disabled=false}
+};
+$("bLogout").onclick=async()=>{
+  const u=window.CLOUD?window.CLOUD.getUser():null;
+  const isGuest=!u||u.isAnonymous;
+  const txt=isGuest
+    ?"Atenção: você está jogando como convidado não vinculado. Ao sair, perderá o acesso ao save na nuvem desta sessão! Deseja realmente sair?"
+    :"Deseja sair da sua conta Google? Seu progresso continuará salvo na nuvem.";
+  if(!confirm(txt))return;
+  if(window.CLOUD){try{await window.CLOUD.logout()}catch(e){}}
+  try{localStorage.setItem(LS_LOGOUT,"1")}catch(e){}
+  setCloudBadge("off");
+  $("acct").classList.remove("on");
+  openLoginScreen("Sessão encerrada.");
+};
+
 function start(data){
   const qGod=new URLSearchParams(location.search).get("god");
   if(qGod){
     requestAnimationFrame(frame);
     const gid=TEST_GOD_PAIRS[qGod]?qGod:(qGod==="drag"?"drag":GODS[0]);
     window.testGod(gid,false);
+  }else if(data&&data.v===3&&Array.isArray(data.units)&&(data.spec||PHASES[data.idx])){
+    startPhase(data.spec||data.idx,data);
+    requestAnimationFrame(frame);
   }else{
-    if(data&&data.v===3&&Array.isArray(data.units)&&(data.spec||PHASES[data.idx]))startPhase(data.spec||data.idx,data);else goHome();
+    document.body.className="splash";
+    applyMenuTabBg("");
+    showMenuBg(true);
     requestAnimationFrame(frame);
   }
   const hot=window.claude&&window.claude.hot;
