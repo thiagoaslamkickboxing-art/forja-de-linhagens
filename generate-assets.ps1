@@ -14,7 +14,7 @@ $coreFiles = @(
 )
 
 $scanDirs = @("img", "videos", "video", "sfx", "audio")
-$allowedExt = @(".html", ".js", ".webmanifest", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp4", ".webm", ".mp3", ".ogg", ".wav")
+$allowedExt = @(".html", ".js", ".json", ".webmanifest", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp4", ".webm", ".mp3", ".ogg", ".wav")
 
 function Get-ShortHash([string]$filePath) {
   $h = Get-FileHash -Path $filePath -Algorithm SHA256
