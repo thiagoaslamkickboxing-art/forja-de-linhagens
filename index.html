@@ -988,6 +988,24 @@ body.title #titleMenu{display:flex;justify-content:space-between}
   </div>
 </div></div>
 
+<div class="sheet" id="guestChoice"><div class="panel">
+  <header><h2>Progresso encontrado</h2><button class="btn" id="gcClose">Voltar</button></header>
+  <div class="cfGrid">
+    <div style="font-size:14px;color:var(--parch);line-height:1.35">Este aparelho já tem um progresso salvo. Como deseja continuar?</div>
+    <div class="cfOpt">
+      <b>Progresso deste aparelho</b>
+      <div class="cfStats" id="gcStats"></div>
+      <div class="cfDate" id="gcDate"></div>
+      <button type="button" class="btn go" id="gcKeep">Continuar o progresso deste aparelho</button>
+    </div>
+    <div class="cfOpt">
+      <b>Nova jornada (Reino 1 · N + L)</b>
+      <div class="cfStats">Começa do zero no Reino 1 com as escolas iniciais (Natureza + Luz). O save atual fica guardado no backup local.</div>
+      <button type="button" class="btn" id="gcReset" style="border-color:#d0604a;color:#ffb8a8">Começar do zero</button>
+    </div>
+  </div>
+</div></div>
+
 <div class="sheet" id="credits"><div class="panel">
   <header><h2>Créditos</h2><button class="btn" id="credClose">Fechar</button></header>
   <div class="credBody">
@@ -1446,6 +1464,7 @@ const REALM_UNLOCK=[
   {realm:5,schools:["F"],gods:false,legChest:false},     // Reino 5 Vulcão
   {realm:6,schools:[],gods:true,legChest:true}           // Reino 6 Abismo (Deuses nível 5 + Baú Lendário)
 ];
+const SAVE_VER=3; // v3+: sistema de arenas (REALM_UNLOCK); saves < 3 migram escolas das cartas possuídas
 function schoolRealm(sch){
   for(const u of REALM_UNLOCK)if(u.schools&&u.schools.includes(sch))return u.realm;
   return 1;
@@ -1456,12 +1475,20 @@ function unlockedSchools(){
   REALM_UNLOCK.forEach((u,i)=>{
     if(realmEntryUnlocked(i)&&u.schools)for(const s of u.schools)set.add(s);
   });
-  // Migração: escolas em que o jogador já possui alguma carta ficam liberadas
-  for(const id in P.heroes)if(C[id]&&C[id].s)set.add(C[id].s);
+  // Migração SOMENTE para saves criados antes da atualização de arenas (v < 3)
+  if(Array.isArray(P.legacySchools)&&P.legacySchools.length){
+    for(const s of P.legacySchools)if(SCH[s])set.add(s);
+  }
   return set;
 }
 function isSchoolUnlocked(sch){return unlockedSchools().has(sch)}
-function unlockedBases(){const u=unlockedSchools();return BASES.filter(id=>u.has(C[id].s))}
+function unlockedBases(){
+  const u=unlockedSchools();
+  const list=BASES.filter(id=>u.has(C[id].s));
+  if(list.length)return list;
+  const r1=(REALM_UNLOCK[0]&&REALM_UNLOCK[0].schools)||["N","L"];
+  return BASES.filter(id=>r1.includes(C[id].s));
+}
 function areGodsUnlocked(){
   const idx=REALM_UNLOCK.findIndex(u=>u.gods);
   if(idx>=0&&realmEntryUnlocked(idx))return true;
@@ -1653,10 +1680,20 @@ function normSpec(spec){
 
 /* ================= progresso ================= */
 const LS="forja-progresso-v2";
-let P={xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],decks:[{name:"Deck 1",cards:[]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}],activeDeck:0,chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",sfxVol:1}};
+let P={v:SAVE_VER,legacySchools:[],xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],decks:[{name:"Deck 1",cards:[]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}],activeDeck:0,chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"}};
 let docRef=null,saving=false,dirty=false;
 function mergeP(s){
   if(!s||typeof s!=="object")return;
+  const srcVer=Math.floor(Number(s.v)||0);
+  const isLegacySave=srcVer<SAVE_VER;
+  P.v=SAVE_VER;
+  if(!Array.isArray(P.legacySchools))P.legacySchools=[];
+  if(Array.isArray(s.legacySchools)){
+    for(const sc of s.legacySchools)if(SCH[sc]&&!P.legacySchools.includes(sc))P.legacySchools.push(sc);
+  }
+  if(isLegacySave&&s.heroes&&typeof s.heroes==="object"){
+    for(const k in s.heroes)if(C[k]&&C[k].tier===1&&C[k].s&&!P.legacySchools.includes(C[k].s))P.legacySchools.push(C[k].s);
+  }
   P.xp=Math.max(P.xp,Math.floor(Number(s.xp)||0));P.best=Math.max(P.best,Math.floor(Number(s.best)||0));
   for(const k in (s.stars||{})){
     const v=Math.min(3,Math.floor(Number(s.stars[k])||0));if(v<=0)continue;
@@ -1881,7 +1918,18 @@ try{hadExistingLocalSave=!!localStorage.getItem(LS)}catch(e){}
 let localUpdatedAtMs=0,cloudDirty=false,cloudSyncTimer=0,cloudSyncing=false,cloudState="off",lastCloudSyncMs=0;
 try{const mt=JSON.parse(localStorage.getItem(LS_META)||"null");if(mt&&mt.updatedAtMs)localUpdatedAtMs=Number(mt.updatedAtMs)||0}catch(e){}
 function makeBlankP(){
-  return{xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],decks:[{name:"Deck 1",cards:[]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}],activeDeck:0,chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"}};
+  return{v:SAVE_VER,legacySchools:[],xp:0,stars:{},rChests:{},chal:{medals:{},dailyDay:0,weeklyWk:0,weeklyStep:0,weeklyHp:100,weeklyDone:0,puzzles:{},bossWk:0,bossWkGot:{},bossBest:{},oneHpDay:0,speedTop:[]},found:{},foundR:{},bestRar:{},best:0,coins:0,gems:0,bosses:{},heroes:{},deck:[],decks:[{name:"Deck 1",cards:[]},{name:"Deck 2",cards:[]},{name:"Deck 3",cards:[]}],activeDeck:0,chests:{m:0,p:0,o:0,l:0},tut:0,pity:0,pityL:0,q:null,wq:null,cal:{step:0,last:0,cycles:0},st:{},ach:{},shop:null,codes:[],cfg:{godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"}};
+}
+function resetToFreshSave(backupReason){
+  if(backupReason&&Object.keys(P.heroes||{}).length)saveBackup(P,backupReason);
+  P=makeBlankP();
+  ensureStart();
+  try{localStorage.setItem(LS,JSON.stringify(P))}catch(e){}
+  saveMeta(Date.now(),"");
+  cloudDirty=true;
+  if(typeof syncCfgUI==="function")syncCfgUI();
+  if(typeof updateTitleUserUI==="function")updateTitleUserUI();
+  if(document.body.classList.contains("home")&&typeof renderHome==="function")renderHome();
 }
 function saveMeta(ms,uid){
   localUpdatedAtMs=ms||Date.now();
@@ -5151,6 +5199,7 @@ function curIco(cur){
 let hToastT=0;
 function hToast(msg){const t=$("hToast");if(!t)return;t.textContent=msg;t.classList.add("on");clearTimeout(hToastT);hToastT=setTimeout(()=>t.classList.remove("on"),2200)}
 function grantHeroCards(id,qty){
+  if(!C[id]||!isSchoolUnlocked(C[id].s))return false;
   let isNew=false,n=qty;
   if(!P.heroes[id]){P.heroes[id]={lv:1,cards:0};updateBestRar(id,C[id].rar);isNew=true;n--;if(P.deck.length<6)P.deck.push(id)}
   if(n>0)P.heroes[id].cards+=n;
@@ -5362,8 +5411,7 @@ function openChest(t){
   if(t==="o"){const pCap=pityCap();P.pity++;if(rs.includes("L"))P.pity=0;else if(P.pity>=pCap){rs[1]="L";P.pity=0}}
   track("chests");
   const allowNewLeg=t==="o"||t==="l";
-  const avail=unlockedBases();
-  const basePool=avail.length?avail:BASES;
+  const basePool=unlockedBases();
   for(const r of rs){
     let r2=r,pool=basePool.filter(id=>C[id].rar===r2);
     if(r2==="L"&&!allowNewLeg){const ownedL=pool.filter(id=>P.heroes[id]);if(ownedL.length)pool=ownedL;else{r2="E";pool=basePool.filter(id=>C[id].rar==="E")}}
@@ -5378,6 +5426,7 @@ function openChest(t){
       if(np.length){r2=nr;pool=np}
     }
     const id=pool[Math.floor(Math.random()*pool.length)];
+    if(!id||!isSchoolUnlocked(C[id].s))continue;
     got[id]=(got[id]||0)+(r2==="C"?3+Math.floor(Math.random()*3):r2==="R"?2+Math.floor(Math.random()*3):r2==="E"?2+Math.floor(Math.random()*2):1);
   }
   const rows=[];
@@ -6453,6 +6502,10 @@ async function syncAfterAuth(user,askConflict){
         cloudDirty=true;await syncCloudNow(true);
       }
     }else{
+      if(askConflict&&hasExistingDeviceSave()){
+        const choice=await openGuestChoice();
+        if(choice==="reset")resetToFreshSave("google-novo-comecar-do-zero");
+      }
       cloudDirty=true;await syncCloudNow(true);
     }
   }catch(e){
@@ -6560,8 +6613,40 @@ $("bLoginGoogle").onclick=async()=>{
     msg.textContent=code==="auth/popup-closed-by-user"?"Login cancelado.":("Falha ao entrar com Google ("+(code||"erro")+").");
   }finally{btn.disabled=false}
 };
+function openGuestChoice(){
+  return new Promise(resolve=>{
+    const sm=saveSummary(P,localUpdatedAtMs);
+    const schs=[...unlockedSchools()].map(s=>SCH[s]?SCH[s].n:s).join(", ");
+    $("gcStats").textContent="Nível "+sm.lv+" · ★ "+sm.st+" estrelas · "+sm.hs+" heróis · Escolas: "+schs;
+    $("gcDate").textContent="Salvo neste aparelho em: "+sm.date;
+    const ov=$("guestChoice");
+    const done=val=>{
+      ov.classList.remove("on");
+      $("gcKeep").onclick=null;$("gcReset").onclick=null;$("gcClose").onclick=null;
+      resolve(val);
+    };
+    $("gcKeep").onclick=()=>done("keep");
+    $("gcReset").onclick=()=>{
+      if(!confirm("Tem certeza que deseja começar do zero no Reino 1 (escolas Natureza + Luz)? O progresso atual será guardado no backup local."))return;
+      done("reset");
+    };
+    $("gcClose").onclick=()=>done("cancel");
+    ov.classList.add("on");
+  });
+}
+function hasExistingDeviceSave(){
+  try{if(!localStorage.getItem(LS))return false}catch(e){return false}
+  return hasRealProgress(P)||(Array.isArray(P.legacySchools)&&P.legacySchools.length>0)||Object.keys(P.heroes||{}).some(id=>C[id]&&!((REALM_UNLOCK[0]&&REALM_UNLOCK[0].schools)||["N","L"]).includes(C[id].s));
+}
 $("bLoginGuest").onclick=async()=>{
   const btn=$("bLoginGuest"),msg=$("loginMsg");
+  if(hasExistingDeviceSave()){
+    const choice=await openGuestChoice();
+    if(choice==="cancel")return;
+    if(choice==="reset")resetToFreshSave("guest-comecar-do-zero");
+  }else{
+    resetToFreshSave(null);
+  }
   btn.disabled=true;msg.textContent="Entrando como convidado...";
   try{
     try{localStorage.removeItem(LS_LOGOUT)}catch(e){}

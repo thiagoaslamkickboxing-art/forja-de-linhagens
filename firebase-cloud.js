@@ -191,7 +191,7 @@ const CLOUD = {
     const ref = doc(db, "saves", id);
     const cleanData = JSON.parse(JSON.stringify(saveObj));
     await setDoc(ref, {
-      v: 2,
+      v: Number(cleanData.v) || 3,
       uid: id,
       displayName: (u && u.displayName) || "Convidado",
       updatedAt: serverTimestamp(),
