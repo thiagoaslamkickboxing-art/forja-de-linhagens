@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="img/icon-192.png">
 <title>Forja de Linhagens</title>
 <script src="audio-manager.js"></script>
+<script src="tutorial.js"></script>
 <script src="img/anim/manifest.js"></script>
 <script src="asset-manager.js"></script>
 <script type="module" src="firebase-cloud.js"></script>
@@ -612,6 +613,24 @@ body.title #titleMenu{display:flex;justify-content:space-between}
 .tmSuggest{width:min(340px,100%);padding:10px 12px;border-radius:10px;background:rgba(24,42,36,.92);border:1px solid var(--gold);display:flex;align-items:center;gap:10px;text-align:left;font-size:13px;box-shadow:0 6px 18px #0008}
 .tmSuggest b{color:var(--gold);display:block;font-size:13px}
 .tmSuggest small{color:var(--dim);font-size:11.5px}
+#tipc{transition:opacity .3s ease}
+#prepBar{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:5;display:none;align-items:center;gap:8px;padding:5px 10px 5px 12px;border-radius:99px;background:rgba(14,24,21,.92);border:1.5px solid var(--gold);box-shadow:0 4px 16px #000a;pointer-events:auto;white-space:nowrap}
+#prepBar.on{display:flex}
+#prepBar .pbLbl{font-family:var(--display);font-size:15px;letter-spacing:.08em;color:#ffe680}
+#prepBar .pbTime{font-size:13px;font-weight:700;color:var(--parch);min-width:26px;text-align:center}
+#prepBar .btn{padding:4px 10px;font-size:12.5px;border-radius:99px}
+#tutSkip{position:fixed;top:max(8px,env(safe-area-inset-top));right:10px;z-index:118;display:none;padding:6px 11px;border-radius:99px;font-size:12px;background:rgba(14,24,21,.92);border:1px solid var(--gold);color:#ffe680}
+#tutSkip.on{display:block}
+#tutWrap{position:fixed;inset:0;z-index:115;display:none;pointer-events:none}
+#tutWrap.on{display:block}
+#tutWrap.dim{background:rgba(4,8,7,.58);pointer-events:auto}
+#tutSpot{position:fixed;border-radius:10px;border:2.5px solid #ffe680;box-shadow:0 0 0 9999px rgba(4,8,7,.46),0 0 22px #ffe680aa;pointer-events:none;transition:all .22s ease}
+#tutHand{position:fixed;font-size:28px;transform:translate(-50%,0);pointer-events:none;filter:drop-shadow(0 3px 6px #000c);animation:tutBob .9s ease-in-out infinite}
+@keyframes tutBob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-9px)}}
+#tutBubble{position:fixed;left:50%;transform:translateX(-50%);width:min(350px,calc(100vw - 24px));padding:13px 15px;border-radius:12px;background:rgba(18,32,27,.96);border:1.5px solid var(--gold);box-shadow:0 10px 28px #000c;pointer-events:auto;display:flex;flex-direction:column;gap:8px;text-align:left}
+#tutTitle{font-family:var(--display);font-size:17px;color:var(--gold);line-height:1.1}
+#tutTxt{font-size:14px;color:var(--parch);line-height:1.35}
+#tutNext{align-self:flex-end;padding:6px 14px;font-size:13px}
 </style>
 </head>
 <body class="home">
@@ -814,6 +833,7 @@ body.title #titleMenu{display:flex;justify-content:space-between}
   </div>
   <div id="stage">
     <canvas id="cv" aria-label="Campo de batalha"></canvas>
+    <div id="prepBar"><span class="pbLbl">PREPARAÇÃO</span><span class="pbTime num" id="prepTime">20s</span><button type="button" class="btn go" id="prepStart">Iniciar onda ▸</button></div>
     <div id="orders">
       <button class="ord" id="oG" aria-label="Grito de Guerra: heróis levam metade do dano por 5 segundos"><em></em>🛡</button>
       <button class="ord" id="oR" aria-label="Rajada: atiradores, magos e suportes atacam 2 vezes mais rápido por 4 segundos"><em></em>⚡</button>
@@ -916,6 +936,7 @@ body.title #titleMenu{display:flex;justify-content:space-between}
       </div>
     </div>
     <button class="btn" id="cfgSound" aria-pressed="true">Som: Ligado</button>
+    <button type="button" class="btn" id="cfgReplayTut">Rever tutorial</button>
     <div class="cfgBkRow">
       <div class="cfgLbl"><span>Recursos offline</span><small class="num" id="cfgAssetVer">v—</small></div>
       <small id="cfgAssetInfo">Verificando armazenamento...</small>
@@ -1064,6 +1085,26 @@ body.title #titleMenu{display:flex;justify-content:space-between}
   <header><h2 id="oTitle"></h2></header>
   <div id="oStars"></div><p id="oText"></p><div id="oObjs"></div><div id="oUnl"></div><div id="oRew" style="padding:0 16px 12px;font-size:14px;line-height:1.35"></div>
   <div class="oBtns"><button class="btn" id="oMap">Mapa</button><button class="btn go" id="oGo"></button></div>
+</div></div>
+
+<button type="button" class="btn" id="tutSkip">Pular tutorial ▸▸</button>
+<div id="tutWrap" aria-live="polite">
+  <div id="tutSpot" hidden></div>
+  <div id="tutHand" hidden>👆</div>
+  <div id="tutBubble">
+    <div id="tutTitle"></div>
+    <div id="tutTxt"></div>
+    <button type="button" class="btn go" id="tutNext">Entendi ▸</button>
+  </div>
+</div>
+
+<div class="sheet" id="tutEnd"><div class="panel">
+  <header><h2>Sua jornada começa</h2></header>
+  <div class="acctBox" style="text-align:center">
+    <div style="font-size:15px;color:var(--parch);line-height:1.45">Você viu o poder das fusões e o despertar de um Deus! <b>Agora forje seu próprio caminho até ele.</b></div>
+    <div style="font-size:13px;color:var(--gold)" id="tutEndRew"></div>
+    <button type="button" class="btn go" id="tutEndOk">Ir para o menu</button>
+  </div>
 </div></div>
 
 <script>
@@ -1417,6 +1458,17 @@ function unitName(c,rar){if(c.tier<2||c.tier===5)return c.n;if(rar==="E")return 
 function unitFx(u){const c=C[u.cls];if(c.tier>=2&&(u.rar==="L"||u.rar==="S"||u.rar==="D")&&c.fx.length){const o=c.fx.map(f=>[f[0],f[1]]);o[0][1]=Math.min(6,o[0][1]+1);return o}return c.fx}
 function unitFxm(u){const c=C[u.cls];if(c.tier>=2&&(u.rar==="L"||u.rar==="S"||u.rar==="D")&&c.fx.length){const m={...c.fxm};m[c.fx[0][0]]=Math.min(6,c.fx[0][1]+1);return m}return c.fxm}
 const FUSE_LV={2:1,3:3,4:6,5:6};
+// Fase de preparação editável (segundos), ouro por segundo poupado e auto-fechamento do card pós-fusão
+const PREP_TIME={first:20,normal:10,boss:15};
+const PREP_GOLD_PER_SEC=1;
+const TIP_AUTOHIDE=2;
+let selAutoHide=0;
+function prepDurationFor(wNum){
+  if(G&&G.ph&&G.ph.mode==="tutorial")return 999;
+  if(wNum<=1)return PREP_TIME.first;
+  if(G&&G.next&&G.next.list&&G.next.list.some(e=>e.k==="boss"))return PREP_TIME.boss;
+  return PREP_TIME.normal;
+}
 const UPC=[3,8,16,28,44,66,94,128,170],UPG=[25,60,120,210,340,500,720,980,1300];
 const CHESTS={
  m:{n:"Baú de Madeira",slots:5,coins:[25,45],w:{C:75,R:22,E:3,L:0},price:100,cur:"c",col:["#8a5a33","#5b3a22","#c9a66b"]},
@@ -1650,6 +1702,7 @@ function awardMedal(mode,lvl){
 }
 function makeChallengeStage(sp){
   const m=sp.mode;
+  if(m==="tutorial"&&window.TUT)return window.TUT.makeStage();
   if(m==="daily"){
     const dc=dailyConfig();
     return{mode:m,r:dc.r,s:1,hard:false,endless:false,key:"c_daily",n:"Desafio Diário · "+dc.rn,rn:dc.rn,th:dc.th,type:"challenge",waves:dc.waves,factor:dc.factor,hpFactor:dc.factor,affix:null,chal:dc.chal,deck:dc.deck,seed:dc.day*17+3};
@@ -2658,7 +2711,14 @@ function genWave(n){
 function preview(w){const out=[];for(let c=0;c<LANES;c++)out.push({n:0,k:{}});for(const e of w.list){const o=out[e.col];o.n++;o.k[e.k]=(o.k[e.k]||0)+1}for(const o of out){let b=null;for(const k in o.k)if(!b||k==="boss"||(b!=="boss"&&o.k[k]>o.k[b]))b=k;o.top=b}return out}
 function startWave(early){
   if(G.inWave||G.over)return;
-  if(G.started&&early&&G.nextT>0){const b=Math.ceil(G.nextT)*2;G.gold+=b;toast("Onda antecipada","+"+b+" de ouro")}
+  if(early&&G.nextT>0&&!(G.ph&&G.ph.mode==="tutorial")){
+    const saved=Math.ceil(Math.max(0,G.nextT)),b=Math.round(saved*PREP_GOLD_PER_SEC);
+    if(b>0){
+      G.gold+=b;
+      G.floats.push({x:2,y:EROWS+0.8,t:1.4,txt:"+"+b+" ouro (prep.)",col:"#ffd24a"});
+      toast("Onda antecipada","+"+b+" de ouro ("+saved+"s poupados)");
+    }
+  }
   if(G.ph.endless&&G.wave>1&&G.wave%10===1){const a=AFF[Math.floor(Math.random()*AFF.length)];G.aff.push(a.n);if(a.hp)G.affHp*=a.hp;if(a.d)G.affD*=a.d;if(a.s)G.affS*=a.s;if(a.fly)G.affFly+=a.fly;if(a.shield)G.affSh+=a.shield;toast("Afixo da fenda: "+a.n,"Ele se acumula até o fim da corrida.");G.next=genWave(G.wave)}
   if(G.ph.endless&&G.bgTh!==battleTheme())buildBg();
   G.started=true;G.angel=0;G.celRev=0;const w=G.next||genWave(G.wave);G.queue=w.list.map(e=>({...e}));G.next=null;G.waveT=0;G.waveN=G.queue.length;G.inWave=true;sfx("wave");
@@ -2669,8 +2729,8 @@ function startWave(early){
     else if(G.ph.endless)window.AUDIO.playMusic(battleMusicId(),1.5);
   }
   G.banner={txt:boss?bossFor(G.wave)[1]+"!":w.pat==="enxame"?"Enxame!":"Onda "+G.wave,t:1.3,col:boss?"#ff7a5c":"#ffe9a3"};
-  if(!P.tut){P.tut=1;persist()}
-  sel=null;ui();
+  if(window.TUT&&window.TUT.isActive())window.TUT.onAction("wave");
+  sel=null;selAutoHide=0;ui();
 }
 function weakest(){let best=0,bv=1e9;for(let c=0;c<LANES;c++){let v=0;for(const u of G.units)if(!u.down&&u.col===c)v+=C[u.cls].tier;if(v<bv){bv=v;best=c}}return best}
 function spawn(k,col,y){
@@ -2840,7 +2900,9 @@ function cast(cx,cy){
     G.arcs.push({ring:1,x:cx,y:cy,r:1.4,t:0.25,h:20});
   }
   puff(cx,cy,40,"#ff8a3c",3,0.7,0.09);puff(cx,cy,20,"#ffd24a",2,0.6,0.07);
-  if(G.decals.length<40)G.decals.push({x:cx,y:cy,t:4,el:"fire",r:0.9});G.shake=0.35;sfx("meteor");track("spells");
+  if(G.decals.length<40)G.decals.push({x:cx,y:cy,t:4,el:"fire",r:0.9});G.shake=0.35;sfx("meteor");
+  if(!(G.ph&&G.ph.mode==="tutorial"))track("spells");
+  if(window.TUT&&window.TUT.isActive())window.TUT.onAction("meteor");
 }
 function order(k){
   if(!G||G.over)return;
@@ -2985,22 +3047,33 @@ function findTarget(u){
 function step(dt){
   if(G.over||G.paused)return;
   if(G.banner){G.banner.t-=dt;if(G.banner.t<=0)G.banner=null}
+  if(selAutoHide>0){selAutoHide-=dt;if(selAutoHide<=0){selAutoHide=0;sel=null;const t=$("tipc");if(t)t.classList.remove("on")}}
+  for(const u of G.units)if(u.shakeT>0)u.shakeT=Math.max(0,u.shakeT-dt);
   for(const k of["cdG","cdR","cdH","gritoT","rajadaT"])if(G[k]>0)G[k]=Math.max(0,G[k]-dt);
   if(G.started)G.speedT+=dt;
+  if(G.ph&&G.ph.mode==="tutorial"&&G.lives<10)G.lives=10;
   if(G.inWave){
     G.mana=Math.min(100,G.mana+dt*1.5);G.waveT+=dt;G.battleT+=dt;
     if(G.units.length>G.maxUnits)G.maxUnits=G.units.length;
     while(G.queue.length&&G.queue[0].t<=G.waveT){const q=G.queue.shift();spawn(q.k,q.col)}
     if(!G.queue.length&&!G.enemies.length){
-      G.inWave=false;G.xp+=5+2*Math.min(G.idx,5);track("waves");
+      G.inWave=false;
+      if(!(G.ph&&G.ph.mode==="tutorial")){G.xp+=5+2*Math.min(G.idx,5);track("waves")}
       for(const u of G.units)if(u.minion)vanishMinion(u);
       G.units=G.units.filter(u=>!u.minion);
       if(sel&&sel.minion)sel=null;
       for(const u of G.units){u.down=false;u.hp=u.mhp}recalc();
+      if(G.ph&&G.ph.mode==="tutorial"){
+        if(window.TUT&&window.TUT.isActive())window.TUT.onAction("waveClear");
+        G.wave++;G.next=genWave(G.wave);G.nextT=prepDurationFor(G.wave);ui();return;
+      }
       if(!G.ph.endless&&G.wave>=G.ph.waves){finish(true);return}
-      const b=20+4*G.wave;G.gold+=b;sfx("clear");toast("Onda "+G.wave+" vencida","+"+b+" de ouro · heróis recuperados");G.wave++;G.next=genWave(G.wave);G.nextT=12;ui();
+      const b=20+4*G.wave;G.gold+=b;sfx("clear");toast("Onda "+G.wave+" vencida","+"+b+" de ouro · preparação aberta");G.wave++;G.next=genWave(G.wave);G.nextT=prepDurationFor(G.wave);ui();
     }
-  }else if(G.started){G.nextT-=dt;if(G.nextT<=0)startWave(false)}
+  }else if(!(G.ph&&G.ph.mode==="tutorial")&&!G.noSummon){
+    G.nextT-=dt;
+    if(G.nextT<=0)startWave(false);
+  }
   // Recarrega orçamento de cura por herói (teto 8% PV/s)
   for(const u of G.units)if(!u.down){const mb=u.mhp*HEAL_CAP_PER_SEC;u.healBudget=Math.min(mb,(u.healBudget==null?mb:u.healBudget)+mb*dt)}
   // CELESTIAL 2/3/4: cura aliados 2/3/5% HP/s (respeitando teto de 8% PV/s)
@@ -3346,20 +3419,25 @@ function finish(won){
 
 /* ================= fusão ================= */
 function fusionOf(a,b){
-  if(a.minion||b.minion)return{err:"Lacaio temporário",why:"Lacaios não podem ser fundidos."};
+  if(a.minion||b.minion)return{err:"Lacaio fixo",errKind:"minion",why:"Lacaios não podem ser fundidos."};
   const A=C[a.cls],B=C[b.cls];
-  if(A.tier!==B.tier)return{err:"Níveis diferentes",why:"Nível "+A.tier+" só funde com nível "+A.tier+"."};
-  if(A.tier>=5)return{err:"Forma Divina",why:"Deuses já estão no nível máximo."};
+  if(A.tier!==B.tier)return{err:"Níveis diferentes",errKind:"tier",why:"Nível "+A.tier+" só funde com Nível "+A.tier+"."};
+  if(A.tier>=5)return{err:"Forma Divina",errKind:"max",why:"Deuses já estão no nível máximo."};
   const key=[A.s,B.s].sort().join("");
   const ra=a.rar||"C",rb=b.rar||"C";
+  const isTut=!!(G&&G.ph&&G.ph.mode==="tutorial");
   if(A.tier===4){
-    if(!areGodsUnlocked())return{err:"Panteão bloqueado",why:"Vença o chefe do Reino 5 para despertar Deuses no Reino 6."};
-    if(G&&G.units.some(u=>!u.minion&&C[u.cls]&&C[u.cls].tier===5))return{err:"Panteão cheio",why:"No máximo 1 Deus em campo por vez."};
-    if((ra!=="L"&&ra!=="S")||(rb!=="L"&&rb!=="S"))return{err:"Requer Lendário+",why:"Apenas dois níveis 4 Lendários ou Supremos podem despertar um Deus."};
+    if(!isTut&&!areGodsUnlocked())return{err:"Panteão bloqueado",errKind:"realm",why:"Deuses liberam no Reino 6."};
+    if(G&&G.units.some(u=>!u.minion&&C[u.cls]&&C[u.cls].tier===5))return{err:"Panteão cheio",errKind:"pantheon",why:"No máximo 1 Deus em campo por vez."};
+    if((ra!=="L"&&ra!=="S")||(rb!=="L"&&rb!=="S"))return{err:"Requer Lendário+",errKind:"rar",why:"Use dois Nível 4 Lendários ou Supremos."};
+    if(!RES[5][key])return{err:"Escolas incompatíveis",errKind:"school",why:"Essas escolas não formam um Deus."};
     return{id:RES[5][key],ra,rb,sum:10,probs:[0,0,0,0,0],divine:true,same:ra===rb,pityReady:false};
   }
   const nt=A.tier+1;
-  if(plvl()<FUSE_LV[nt]&&!(G&&G.ph&&G.ph.allowFuse&&nt<=G.ph.allowFuse))return{err:"Fusão bloqueada",why:"Fusão de nível "+nt+" abre no nível "+FUSE_LV[nt]+" de jogador."};
+  if(!RES[nt]||!RES[nt][key])return{err:"Escolas incompatíveis",errKind:"school",why:"Essas escolas não formam fusão."};
+  if(plvl()<FUSE_LV[nt]&&!(G&&G.ph&&G.ph.allowFuse&&nt<=G.ph.allowFuse)){
+    return{err:"Fusão bloqueada",errKind:"level",needTier:nt,needLv:FUSE_LV[nt],why:"Fusão de Nível "+nt+" libera no nível "+FUSE_LV[nt]+" da conta"};
+  }
   const sum=(RAR_V[ra]||1)+(RAR_V[rb]||1);
   const probs=fusionProbs(ra,rb);
   return{id:RES[nt][key],ra,rb,sum,probs,same:ra===rb,pityReady:(P.pityL||0)>=FUSION_PITY_MAX};
@@ -3399,14 +3477,19 @@ function fuse(a,b){
   if(hadPiro&&G.enemies.length)for(const e of[...G.enemies])if(!e.dead&&e.col===b.col)status(e,{burn:2},prevDmg,"F",b);
   if(hadCrio&&G.enemies.length)for(const e of[...G.enemies])if(!e.dead&&e.col===b.col)status(e,{slow:2},prevDmg,"G",b);
   if(hadTemp&&G.enemies.length){const ed=prevDmg*1.5*0.5;for(const e of[...G.enemies]){G.arcs.push({x1:b.x,y1:b.y,x2:e.x,y2:e.y,t:0.22});hurt(e,ed,b)}sfx("bolt")}
-  track("fuses");if(c.tier===2)track("t2");if(c.tier>=3)G.madeT3=true;if(c.tier===3)track("t3");if(c.tier===4)track("t4");
-  if(rar==="R")track("rareFuse");else if(rar==="E")track("epicFuse");else if(rar==="L"||rar==="S")track("legFuse");
+  const isTut=!!(G&&G.ph&&G.ph.mode==="tutorial");
+  if(!isTut){
+    track("fuses");if(c.tier===2)track("t2");if(c.tier>=3)G.madeT3=true;if(c.tier===3)track("t3");if(c.tier===4)track("t4");
+    if(rar==="R")track("rareFuse");else if(rar==="E")track("epicFuse");else if(rar==="L"||rar==="S")track("legFuse");
+  }
   if(G.tip===1)G.tip=2;
-  const newLin=!P.found[r.id],newVer=!(P.foundR[r.id]&&P.foundR[r.id][rar]);
-  P.found[r.id]=1;
-  (P.foundR[r.id]||(P.foundR[r.id]={}))[rar]=1;
-  if(!r.divine)updateBestRar(r.id,rar);
-  persist();
+  const newLin=!isTut&&!P.found[r.id],newVer=!isTut&&!(P.foundR[r.id]&&P.foundR[r.id][rar]);
+  if(!isTut){
+    P.found[r.id]=1;
+    (P.foundR[r.id]||(P.foundR[r.id]={}))[rar]=1;
+    if(!r.divine)updateBestRar(r.id,rar);
+    persist();
+  }
   if(r.divine){
     puff(b.x,b.y,34,"#fff6c4",3.1,0.95,0.085);
     puff(b.x,b.y,20,SCH[c.s].c,2.5,0.85,0.07);
@@ -3414,8 +3497,8 @@ function fuse(a,b){
     G.arcs.push({glow:1,x:b.x,y:b.y,r:2.4,t:1.2,max:1.2,h:c.h});
     G.arcs.push({ring:1,x:b.x,y:b.y,r:2.6,t:0.65,h:46});
     G.shake=Math.max(G.shake,0.35);
-    if(shouldPlayGodVid(newLin)){
-      playGodVideo(c,{isFirst:newLin,isReplay:false,unit:b});
+    if(isTut||shouldPlayGodVid(newLin)){
+      playGodVideo(c,{isFirst:isTut||newLin,isReplay:false,unit:b});
     }else if(newLin){
       sfx("divine");
       G.banner={txt:"NOVO DEUS DESPERTOU!",t:2.4,max:2.4,col:"#fff4b8"};
@@ -3427,6 +3510,8 @@ function fuse(a,b){
       toast("DESPERTAR DIVINO!",c.n);
     }
   }else if(newVer){G.floats.push({x:b.x,y:b.y-0.55,t:1.45,txt:"NOVA VERSÃO!",col:rar==="S"?"#ffffff":rar==="L"?"#fff2b0":rar==="E"?"#efd4ff":"#ffe9a3"})}
+  if(!r.divine){sel=b;selAutoHide=TIP_AUTOHIDE}
+  if(isTut&&window.TUT&&window.TUT.isActive())window.TUT.onAction("fuse",{tier:c.tier,divine:!!r.divine,id:r.id});
   if(!r.divine&&rar==="S"){
     sfx("rarity_s");
     G.supDim=0.30;
@@ -3476,9 +3561,11 @@ function summon(){
   if(G.noSummon){sfx("no");toast("Invocação bloqueada","Neste quebra-cabeça, só mova, troque e funda.");return}
   const c=cost();
   if(G.gold<c){sfx("no");toast("Ouro insuficiente","Vença ondas para ganhar mais.");return}
+  const isTut=!!(G.ph&&G.ph.mode==="tutorial");
   let f=freeCells(),cell=null;
   if(f.length){
-    cell=f[Math.floor(Math.random()*f.length)];
+    if(isTut&&window.TUT&&window.TUT.currentStep()===2&&!unitAt(2,2))cell=[2,2];
+    else cell=f[Math.floor(Math.random()*f.length)];
   }else{
     // Lacaios NUNCA impedem invocação: remove 1 lacaio e cede sua casa
     const mn=G.units.find(u=>u.minion&&!(G.blocked&&G.blocked.has(u.col)));
@@ -3491,12 +3578,13 @@ function summon(){
   }
   if(!cell){sfx("no");toast("Formação cheia","Funda heróis do mesmo nível ou venda um.");return}
   const dk=G.deck&&G.deck.length?G.deck:P.deck;
-  const cls=dk[Math.floor(Math.random()*dk.length)];
+  const cls=(isTut&&window.TUT)?window.TUT.nextSummonId():dk[Math.floor(Math.random()*dk.length)];
   const[x,y]=cell;
-  G.gold-=c;G.summons++;track("summons");
+  G.gold-=c;G.summons++;if(!isTut)track("summons");
   const u=addUnit(cls,x,y);
   triggerSummonAbil(u);
   if(G.tip===0)G.tip=1;sfx("summon");puff(u.x,u.y,10,"#ffe9a3",1.5,0.5,0.05);ui();
+  if(isTut&&window.TUT&&window.TUT.isActive())window.TUT.onAction("summon",{u});
 }
 const refund=u=>Math.round(12*Math.pow(2,C[u.cls].tier-1));
 
@@ -4003,6 +4091,7 @@ function getSupAura(rad){
 }
 function drawUnit(u,x,y,ghost){
   const c=C[u.cls],L=c.look,now=performance.now()/1000,schc=SCH[c.s].c,ur=u.rar||"C",rarc=u.minion?"#6ee7ff":(RAR[ur]?RAR[ur].c:"#fff0a6"),sup=!u.minion&&c.tier>=2&&(ur==="S"||c.tier===5),leg=!u.minion&&c.tier>=2&&(ur==="L"||sup);
+  if(!ghost&&u.shakeT>0)x+=Math.sin(now*68)*6*(u.shakeT/0.28);
   ctx.globalAlpha=ghost?0.9:1;
   const base=y+fh*0.36;
   ctx.beginPath();ctx.ellipse(x,base,cw*0.36,fh*0.12,0,0,7);ctx.fillStyle="#0008";ctx.fill();
@@ -4459,12 +4548,30 @@ function draw(){
   for(const f of G.floats){const[x,y]=P2(f.x,f.y);ctx.globalAlpha=Math.min(1,f.t*2);ctx.font=`700 ${Math.max(13,fh*0.24)}px "Alegreya Sans",sans-serif`;ctx.textAlign="center";ctx.lineWidth=3;ctx.strokeStyle="#000a";ctx.strokeText(f.txt,x,y);ctx.fillStyle=f.col;ctx.fillText(f.txt,x,y);ctx.globalAlpha=1}
   if(moving){
     const cc=cellOf(drag.px,drag.py),t=cc&&unitAt(cc[0],cc[1]);
-    if(cc){const[x,y]=cellC(cc[0],cc[1]),blk=G.blocked&&G.blocked.has(cc[0]);rr(x-cw/2+1,y-fh/2+1,cw-2,fh-2,10);ctx.strokeStyle=blk?"#e0604a":t&&t!==drag.u?(fusionOf(drag.u,t).err?"#9fd3ff":"#e4b548"):"#fff";ctx.lineWidth=3;ctx.stroke()}
+    if(cc){
+      const[x,y]=cellC(cc[0],cc[1]),blk=G.blocked&&G.blocked.has(cc[0]);
+      const fz0=(t&&t!==drag.u)?fusionOf(drag.u,t):null;
+      const lockedDrag=blk||(G.inWave&&(!t||(fz0&&fz0.err)))||(fz0&&(fz0.errKind==="level"||fz0.errKind==="realm"));
+      rr(x-cw/2+1,y-fh/2+1,cw-2,fh-2,10);
+      ctx.strokeStyle=lockedDrag?"#e0604a":(fz0&&!fz0.err)?"#e4b548":(t&&t!==drag.u)?"#9fd3ff":"#fff";
+      ctx.lineWidth=3;ctx.stroke();
+    }
     drawUnit(drag.u,drag.px,drag.py-fh*0.3,true);
-    if(t&&t!==drag.u){
+    if(!t&&cc&&G.inWave&&!(G.blocked&&G.blocked.has(cc[0]))){
+      const[cx2,cy2]=cellC(cc[0],cc[1]),nm="Reorganize na preparação";
+      ctx.font=`700 ${Math.max(11,fh*0.18)}px "Alegreya Sans",sans-serif`;
+      const w=ctx.measureText(nm).width+16,lx=Math.min(W-w/2-4,Math.max(w/2+4,cx2)),ly=Math.max(14,cy2-fh*0.95);
+      rr(lx-w/2,ly-12,w,24,8);ctx.fillStyle="#3a1c18";ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle="#ff7a5c";ctx.stroke();
+      ctx.fillStyle="#ffd2c8";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(nm,lx,ly);ctx.textBaseline="alphabetic";
+    }else if(t&&t!==drag.u){
       const fz=fusionOf(drag.u,t),[cx2,cy2]=cellC(cc[0],cc[1]);
       ctx.font=`700 ${Math.max(12,fh*0.2)}px "Alegreya Sans",sans-serif`;
-      if(fz.divine){
+      if(fz.errKind==="level"||fz.errKind==="realm"){
+        const nm=fz.errKind==="level"?("🔒 Nível "+fz.needTier+" (conta Nv "+fz.needLv+")"):"🔒 Libera no Reino 6";
+        const w=ctx.measureText(nm).width+18,lx=Math.min(W-w/2-4,Math.max(w/2+4,cx2)),ly=Math.max(14,cy2-fh*0.95);
+        rr(lx-w/2,ly-13,w,26,8);ctx.fillStyle="#241a1a";ctx.fill();ctx.lineWidth=1.8;ctx.strokeStyle="#ff7a5c";ctx.stroke();
+        ctx.fillStyle="#ffd8c8";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(nm,lx,ly);ctx.textBaseline="alphabetic";
+      }else if(fz.divine){
         if(fz.id)preloadGodVid(fz.id);
         const pre="✦ Fusão Divina ✦",f1=Math.max(13,fh*0.22);
         ctx.font=`700 ${f1}px "Alegreya Sans",sans-serif`;
@@ -4490,8 +4597,9 @@ function draw(){
         ctx.font=`700 ${f1}px "Alegreya Sans",sans-serif`;ctx.fillStyle="#1b1a12";ctx.fillText(pre,lx-w/2+isz+10,ly-hh*0.2);
         ctx.font=`700 ${f2}px "Alegreya Sans",sans-serif`;ctx.fillStyle=(allSup||fz.pityReady)?"#9c5b00":"#4b3b18";ctx.fillText(rt,lx-w/2+isz+10,ly+hh*0.22);ctx.textBaseline="alphabetic";
       }else{
-        const nm=t.minion?"Lacaio (fixo)":"Trocar de lugar",w=ctx.measureText(nm).width+16,lx=Math.min(W-w/2-4,Math.max(w/2+4,cx2)),ly=Math.max(14,cy2-fh*0.95);
-        rr(lx-w/2,ly-12,w,24,8);ctx.fillStyle=t.minion?"#ffd2c4":"#cfe8ff";ctx.fill();ctx.fillStyle="#1b1a12";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(nm,lx,ly);ctx.textBaseline="alphabetic";
+        const nm=t.minion?"Lacaio (fixo)":G.inWave?"Reorganize na preparação":(fz.errKind==="rar"||fz.errKind==="school"||fz.errKind==="pantheon"||fz.errKind==="max")?fz.err:"Trocar de lugar";
+        const w=ctx.measureText(nm).width+16,lx=Math.min(W-w/2-4,Math.max(w/2+4,cx2)),ly=Math.max(14,cy2-fh*0.95);
+        rr(lx-w/2,ly-12,w,24,8);ctx.fillStyle=(t.minion||G.inWave)?"#ffd2c4":"#cfe8ff";ctx.fill();ctx.fillStyle="#1b1a12";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(nm,lx,ly);ctx.textBaseline="alphabetic";
       }
     }
   }
@@ -4510,7 +4618,7 @@ function draw(){
 
 /* ================= interface ================= */
 let toastT=0;
-function toast(a,b){const t=$("toast");t.textContent=a;if(b){const s=document.createElement("span");s.textContent=b;t.appendChild(s)}t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),2600)}
+function toast(a,b,ms){const t=$("toast");t.textContent=a;if(b){const s=document.createElement("span");s.textContent=b;t.appendChild(s)}t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),ms||2600)}
 function chips(el,c,u){
   if(!el||!c)return;
   el.textContent="";
@@ -4529,8 +4637,19 @@ function tick(){
     if(G.ph.timed)$("vWave").textContent=(G.ph.waves===1?"Chefe":"Onda "+G.wave+"/"+G.ph.waves)+" · "+fmtTime(G.speedT);
     $("wProg").firstElementChild.style.width=(G.inWave?Math.round((1-(G.queue.length+G.enemies.length)/Math.max(1,G.waveN+G.enemies.length*0))*100):0)+"%";
     const bw=$("bWave");bw.disabled=G.inWave;bw.classList.toggle("call",!G.inWave);
-    $("vWaveBtn").textContent=G.inWave?"⚔":G.started?Math.ceil(Math.max(0,G.nextT))+"s":"▶";
-    $("vWaveSub").textContent=G.inWave?"Combate":G.started?"+"+Math.ceil(Math.max(0,G.nextT))*2+" ouro":"Onda";
+    const savedSec=Math.ceil(Math.max(0,G.nextT)),prepBonus=Math.round(savedSec*PREP_GOLD_PER_SEC);
+    const isTutM=!!(G.ph&&G.ph.mode==="tutorial");
+    $("vWaveBtn").textContent=G.inWave?"⚔":isTutM?"▶":(savedSec+"s");
+    $("vWaveSub").textContent=G.inWave?"Combate":isTutM?"Iniciar":("+"+prepBonus+" ouro");
+    const pb=$("prepBar");
+    if(pb){
+      const showPrep=!G.inWave&&!G.over;
+      pb.classList.toggle("on",showPrep);
+      if(showPrep){
+        $("prepTime").textContent=isTutM?"—":(savedSec+"s");
+        $("prepStart").textContent=isTutM?"Iniciar onda ▸":("Iniciar onda ▸"+(prepBonus>0?" (+"+prepBonus+"🪙)":""));
+      }
+    }
     const sp=$("bSpell");sp.disabled=!!G.noMeteor;sp.classList.toggle("ready",!G.noMeteor&&G.mana>=100);sp.setAttribute("aria-pressed",!G.noMeteor&&G.aim);
     sp.querySelector("em").style.background=G.noMeteor?"none":`conic-gradient(#ff8a3c ${G.mana*3.6}deg,transparent 0)`;sp.querySelector("em").style.webkitMask=sp.querySelector("em").style.mask="radial-gradient(circle,transparent 62%,#000 64%)";
     for(const[id,k,max,on]of[["oG","cdG",25,"gritoT"],["oR","cdR",30,"rajadaT"],["oH","cdH",40,""]]){const b=$(id),cd=G[k];b.classList.toggle("ready",cd<=0);b.classList.toggle("on",!!(on&&G[on]>0));const em=b.querySelector("em");em.style.background=cd>0?`conic-gradient(#0009 ${cd/max*360}deg,transparent 0)`:"none"}
@@ -4543,7 +4662,7 @@ function ui(){
     if(!G)return;
     $("vWave").textContent=G.ph.endless?"Onda "+G.wave:"Onda "+G.wave+"/"+G.ph.waves;
     $("hName").textContent=G.ph.n+(G.aff.length?" · "+G.aff.join(", "):"");
-    const h=$("hint");if(!P.tut){h.style.display="block";h.innerHTML=TIPS[G.tip]}else h.style.display="none";
+    const h=$("hint");if(h)h.style.display="none";
     tick();
   }catch(err){warnOnce("ui:"+(err&&err.message||err),"Erro em ui: "+err)}
 }
@@ -6228,6 +6347,7 @@ function startPhase(spec,snap){
   G.maxUnits=G.units.length;
   for(const u of G.units)u.pop=0;
   G.next=genWave(G.wave);
+  G.nextT=prepDurationFor(G.wave);
   resize();buildBg();ui();
 }
 function openGrim(){
@@ -6406,10 +6526,11 @@ function showRealmUnlock(entry,freeCards){
 $("suOk").onclick=()=>{$("schUnlock").classList.remove("on");duckMusic(false)};
 $("schUnlock").onclick=e=>{if(e.target===$("schUnlock")){$("schUnlock").classList.remove("on");duckMusic(false)}};
 $("bWave").onclick=()=>startWave(true);
+$("prepStart").onclick=()=>startWave(true);
 $("bSpeed").onclick=e=>{if(!G)return;G.speed=G.speed===1?2:1;e.currentTarget.textContent="Velocidade "+G.speed+"×";e.currentTarget.setAttribute("aria-pressed",G.speed===2)};
 $("bMap").onclick=()=>{if(!G||G.over)return;G.paused=true;$("pause").classList.add("on")};
 $("bResume").onclick=()=>{$("pause").classList.remove("on");if(G)G.paused=false};
-$("bQuit").onclick=goHome;
+$("bQuit").onclick=()=>{if(window.TUT&&window.TUT.isActive())window.TUT.stop();goHome()};
 $("oMap").onclick=goHome;
 
 /* ================= toque e arrasto ================= */
@@ -6420,8 +6541,8 @@ cv.addEventListener("pointerdown",e=>{
   const[px,py]=ptr(e);
   if(G.aim){const y=unSY(py),x=(px-W/2)/(cw*sc(y))+2;cast(x,y);ui();return}
   const cc=cellOf(px,py),u=cc&&unitAt(cc[0],cc[1]);
-  if(!u){sel=null;ui();return}
-  sel=u;ui();
+  if(!u){sel=null;selAutoHide=0;ui();return}
+  sel=u;selAutoHide=0;ui();
   if(u.minion)return; // Lacaios não podem ser movidos nem fundidos
   drag={u,px,py,sx:e.clientX,sy:e.clientY,moved:false};
   try{cv.setPointerCapture(e.pointerId)}catch(err){}
@@ -6431,12 +6552,30 @@ cv.addEventListener("pointerup",()=>{
   if(!drag)return;const d=drag;drag=null;
   if(!G||!d.moved||!G.units.includes(d.u)){placeTip();return}
   const cc=cellOf(d.px,d.py);if(!cc){placeTip();return}
-  if(G.blocked&&G.blocked.has(cc[0])){sfx("no");toast("Coluna bloqueada","As colunas 1 e 5 estão bloqueadas neste desafio.");placeTip();return}
+  if(G.blocked&&G.blocked.has(cc[0])){d.u.shakeT=0.28;sfx("no");toast("Coluna bloqueada","As colunas 1 e 5 estão bloqueadas neste desafio.",2000);placeTip();return}
   const t=unitAt(cc[0],cc[1]);
-  if(!t){place(d.u,cc[0],cc[1]);recalc();if(G.tip===1)G.tip=2;ui()}
-  else if(t!==d.u){
-    if(t.minion){sfx("no");toast("Lacaio fixo","Lacaios não podem ser movidos nem fundidos.");placeTip();return}
-    if(fusionOf(d.u,t).err)swap(d.u,t);else fuse(d.u,t);
+  if(!t){
+    if(G.inWave){
+      d.u.shakeT=0.28;sfx("no");toast("Reorganize na preparação","",2000);placeTip();return;
+    }
+    place(d.u,cc[0],cc[1]);recalc();
+    if(window.TUT&&window.TUT.isActive())window.TUT.onAction("move",{u:d.u,col:cc[0],r:cc[1]});
+    ui();
+  }else if(t!==d.u){
+    if(t.minion){d.u.shakeT=0.28;sfx("no");toast("Lacaio fixo","Lacaios não podem ser movidos nem fundidos.",2000);placeTip();return}
+    const fz=fusionOf(d.u,t);
+    if(!fz.err){
+      fuse(d.u,t);
+    }else if(fz.errKind==="level"){
+      d.u.shakeT=0.28;sfx("no");toast(fz.why,"",2000);
+    }else if(fz.errKind==="realm"||fz.errKind==="rar"||fz.errKind==="school"||fz.errKind==="pantheon"||fz.errKind==="max"){
+      d.u.shakeT=0.28;sfx("no");toast(fz.err,fz.why,2000);
+    }else if(G.inWave){
+      d.u.shakeT=0.28;sfx("no");toast("Reorganize na preparação","",2000);
+    }else{
+      swap(d.u,t);
+      if(window.TUT&&window.TUT.isActive())window.TUT.onAction("move",{u:d.u,col:cc[0],r:cc[1]});
+    }
   }
   placeTip();
 });
@@ -6740,7 +6879,133 @@ function openAccount(){
   if($("acctMsg"))$("acctMsg").textContent="";
   $("acct").classList.add("on");
 }
-$("tmPlay").onclick=()=>{sfx("summon");goHome()};
+$("tmPlay").onclick=()=>{
+  sfx("summon");
+  if(!P.tut&&!hasRealProgress(P)&&window.TUT){startTutorial();return}
+  goHome();
+};
+$("cfgReplayTut").onclick=()=>{$("cfg").classList.remove("on");sfx("summon");startTutorial()};
+$("tutNext").onclick=()=>{if(window.TUT)window.TUT.onAck()};
+$("tutSkip").onclick=()=>{if(window.TUT)window.TUT.skip()};
+$("tutEndOk").onclick=()=>{$("tutEnd").classList.remove("on");goHome()};
+
+function startTutorial(){
+  if(!window.TUT){goHome();return}
+  $("tutSkip").classList.add("on");
+  startPhase({mode:"tutorial"});
+  G.units=[];G.traps=[];G.enemies=[];G.gold=100;G.inWave=false;
+  addUnit("druida",1,1,"C");
+  addUnit("cleriga",3,1,"C");
+  G.next={pat:"linha",hot:2,list:[{k:"g",col:1,t:0.5},{k:"g",col:2,t:1.1},{k:"g",col:3,t:1.7}]};
+  G.nextT=999;
+  recalc();ui();
+
+  const cellRect=(col,r)=>{
+    const cr=cv.getBoundingClientRect(),[cx,cy]=cellC(col,r);
+    return{left:cr.left+cx-cw*0.5,top:cr.top+cy-fh*0.5,width:cw,height:fh};
+  };
+  const bridge={
+    getRect(kind){
+      const cr=cv.getBoundingClientRect();
+      if(kind==="lanes")return{left:cr.left+W*0.12,top:cr.top+eH*0.12,width:W*0.76,height:eH*0.52};
+      if(kind==="board")return{left:cr.left+W*0.08,top:cr.top+eH,width:W*0.84,height:FROWS*fh};
+      if(kind==="moveFront"){
+        const u=G.units.find(x=>!x.minion&&x.r===2)||G.units.find(x=>!x.minion);
+        return u?cellRect(u.col,0):cellRect(2,0);
+      }
+      if(kind==="fusePair2"){
+        const u=G.units.find(x=>!x.minion&&C[x.cls].tier===1);
+        return u?cellRect(u.col,u.r):cellRect(1,1);
+      }
+      if(kind==="fusedUnit"){
+        const u=G.units.find(x=>!x.minion&&C[x.cls].tier>=2);
+        return u?cellRect(u.col,u.r):cellRect(2,1);
+      }
+      if(kind==="fuseHigh"){
+        const u=G.units.find(x=>!x.minion&&(C[x.cls].tier===2||C[x.cls].tier===3));
+        return u?cellRect(u.col,u.r):cellRect(1,1);
+      }
+      if(kind==="fuseGod"){
+        const u=G.units.find(x=>!x.minion&&C[x.cls].tier===4);
+        return u?cellRect(u.col,u.r):cellRect(1,1);
+      }
+      return null;
+    },
+    prepareStep(stepId){
+      if(!G)return;
+      if(stepId===2){G.gold=Math.max(G.gold,cost()+20);ui()}
+      else if(stepId===3){
+        // Seleciona o herói da linha de trás para mostrar alcance no tabuleiro
+        const u=G.units.find(x=>!x.minion&&x.r===2)||G.units[G.units.length-1];
+        if(u){sel=u;selAutoHide=0;placeTip()}
+      }else if(stepId===5){
+        G.inWave=false;G.enemies=[];G.queue=[];
+        if(G.units.filter(x=>!x.minion&&C[x.cls].tier===1).length<2){
+          if(!unitAt(1,1))addUnit("druida",1,1,"C");
+          if(!unitAt(2,1))addUnit("cleriga",2,1,"C");
+        }
+        recalc();ui();
+      }else if(stepId===7){
+        // Garante linhagem Celestial (2/4) acesa na faixa de linhagens
+        if(!G.units.some(x=>x.cls==="novica")&&!unitAt(3,2))addUnit("novica",3,2,"C");
+        if(!G.units.some(x=>x.cls==="paladino")&&!unitAt(4,2))addUnit("paladino",4,2,"E");
+        recalc();ui();
+      }else if(stepId===8){
+        // Força reação VAPOR visível no campo
+        G.enemies=[];
+        spawn("g",2,2.2);
+        const e=G.enemies[0];
+        if(e){e.burnT=3;e.burnD=5;status(e,{slow:3},40,"G",G.units[0])}
+      }else if(stepId===9){
+        // Mostra aura de suporte + armadilha no caminho
+        G.enemies=[];
+        if(!G.units.some(x=>x.cls==="cogumelos")&&!unitAt(0,1))addUnit("cogumelos",0,1,"R");
+        const arm=G.units.find(x=>x.cls==="cogumelos");
+        if(arm)plantTrap(arm);
+        const sup=G.units.find(x=>x.cls==="cleriga"||x.cls==="novica"||x.cls==="ent");
+        if(sup){sel=sup;selAutoHide=0;placeTip()}
+      }else if(stepId===10){
+        G.mana=100;G.enemies=[];
+        spawn("g",1,2.5);spawn("g",2,2.3);spawn("g",3,2.6);
+        ui();
+      }else if(stepId===11){
+        G.inWave=false;G.enemies=[];G.units=[];G.traps=[];
+        addUnit("bosque",1,1,"R");
+        addUnit("altacleriga",2,1,"R");
+        recalc();ui();
+      }else if(stepId===12){
+        G.inWave=false;G.enemies=[];G.units=[];G.traps=[];
+        // Dois Nível 4 Lendários de L + N (LN -> Deus do Sol solD!)
+        addUnit("serafim",1,1,"L",1.5);
+        addUnit("arvoreS",3,1,"L",1.5);
+        // Onda final que o Deus do Sol vai limpar ao despertar!
+        spawn("g",0,1.6);spawn("g",1,1.9);spawn("g",2,1.5);spawn("g",3,1.8);spawn("g",4,1.6);
+        recalc();ui();
+      }else if(stepId===13){
+        // O Deus do Sol limpa os inimigos restantes com brilho dourado
+        for(const e of[...G.enemies])if(!e.dead)hurt(e,e.hp+999);
+      }
+    },
+    giveSecondT3(){
+      if(!G)return;
+      const t3=G.units.find(x=>!x.minion&&C[x.cls].tier===3);
+      const col=t3&&t3.col===2?3:2;
+      if(!unitAt(col,1))addUnit("hierofante",col,1,"E");
+      recalc();ui();
+    },
+    onComplete(skipped){
+      $("tutSkip").classList.remove("on");
+      const firstTime=!P.tut;
+      P.tut=1;
+      if(firstTime){P.chests.m=(P.chests.m||0)+1;persist(true)}
+      else persist();
+      if(skipped){goHome();return}
+      $("tutEndRew").textContent=firstTime?"Recompensa inicial: +1 Baú de Madeira (abra na aba Baús)!":"Tutorial revisado com sucesso!";
+      $("tutEnd").classList.add("on");
+    }
+  };
+  window.TUT.start(bridge);
+}
 $("tmAcct").onclick=()=>{sfx("summon");openAccount()};
 $("tmUserBtn").onclick=()=>{sfx("summon");openAccount()};
 $("tmCloud").onclick=()=>{sfx("summon");openAccount()};
@@ -6935,8 +7200,14 @@ $("dlClear").onclick=doClearAssets;
 $("cfgClearAssets").onclick=doClearAssets;
 
 function start(data){
-  const qGod=new URLSearchParams(location.search).get("god");
-  if(qGod){
+  // Contas existentes não são forçadas ao tutorial (mas mantêm "Rever tutorial" em Configurações)
+  if((hadExistingLocalSave&&hasRealProgress(P))&&!P.tut){P.tut=1;try{localStorage.setItem(LS,JSON.stringify(P))}catch(e){}}
+  const qs=new URLSearchParams(location.search);
+  const qGod=qs.get("god"),qTut=qs.get("tutorial");
+  if(qTut==="1"){
+    requestAnimationFrame(frame);
+    startTutorial();
+  }else if(qGod){
     requestAnimationFrame(frame);
     const gid=TEST_GOD_PAIRS[qGod]?qGod:(qGod==="drag"?"drag":GODS[0]);
     window.testGod(gid,false);

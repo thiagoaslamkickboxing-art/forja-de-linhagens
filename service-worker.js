@@ -1,5 +1,5 @@
 ﻿// Aumente o numero da versao ao publicar uma nova atualizacao do jogo
-const CACHE_VERSION = "forja-de-linhagens-v10";
+const CACHE_VERSION = "forja-de-linhagens-v11";
 const PACK_CACHE_ESS = "forja-pack-essential";
 const PACK_CACHE_CMP = "forja-pack-complete";
 const VIDEO_CACHE = "forja-de-linhagens-videos-v1";
@@ -9,6 +9,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./audio-manager.js",
+  "./tutorial.js",
   "./img/anim/manifest.js",
   "./asset-manager.js",
   "./firebase-cloud.js",

@@ -9,6 +9,7 @@ Set-Location $root
 $coreFiles = @(
   "index.html",
   "audio-manager.js",
+  "tutorial.js",
   "firebase-cloud.js",
   "asset-manager.js",
   "manifest.webmanifest"
