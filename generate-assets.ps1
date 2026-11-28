@@ -8,13 +8,14 @@ Set-Location $root
 
 $coreFiles = @(
   "index.html",
+  "audio-manager.js",
   "firebase-cloud.js",
   "asset-manager.js",
   "manifest.webmanifest"
 )
 
-$scanDirs = @("img", "videos", "video", "sfx", "audio")
-$allowedExt = @(".html", ".js", ".json", ".webmanifest", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp4", ".webm", ".mp3", ".ogg", ".wav")
+$scanDirs = @("img", "music", "videos", "video", "sfx", "audio")
+$allowedExt = @(".html", ".js", ".json", ".webmanifest", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp4", ".webm", ".m4a", ".mp3", ".ogg", ".wav")
 
 function Get-ShortHash([string]$filePath) {
   $h = Get-FileHash -Path $filePath -Algorithm SHA256
@@ -28,6 +29,13 @@ function Classify-Asset([string]$relPath) {
   }
   if ($relPath -match '^(sfx|audio)/') {
     return @{ pack = "essential"; realm = $null }
+  }
+  if ($relPath -match '^music/') {
+    # m_titulo e m_menu ficam no pacote Essencial; demais faixas e jingles no Completo
+    if ($relPath -eq "music/m_titulo.m4a" -or $relPath -eq "music/m_menu.m4a") {
+      return @{ pack = "essential"; realm = $null }
+    }
+    return @{ pack = "complete"; realm = $null }
   }
   if ($relPath -match '^(videos|video)/') {
     return @{ pack = "complete"; realm = $null }
@@ -76,6 +84,8 @@ foreach ($dir in $scanDirs) {
     $ext = $f.Extension.ToLowerInvariant()
     if ($allowedExt -notcontains $ext) { continue }
     $rel = $f.FullName.Substring($root.Length + 1).Replace('\', '/')
+    # Ignora faixas extras não referenciadas em music/
+    if ($rel -match '^music/' -and $rel -notmatch '^music/(m_|j_)[a-z]+\.m4a$') { continue }
     $cls = Classify-Asset $rel
     $obj = [ordered]@{
       path = $rel

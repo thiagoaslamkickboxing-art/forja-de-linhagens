@@ -1,0 +1,4 @@
+/music/*.m4a
+  Content-Type: audio/mp4
+  Accept-Ranges: bytes
+  Cache-Control: public, max-age=31536000, immutable

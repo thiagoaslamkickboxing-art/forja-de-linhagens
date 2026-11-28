@@ -12,6 +12,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
 <link rel="apple-touch-icon" href="img/icon-192.png">
 <title>Forja de Linhagens</title>
+<script src="audio-manager.js"></script>
+<script src="img/anim/manifest.js"></script>
 <script src="asset-manager.js"></script>
 <script type="module" src="firebase-cloud.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -898,7 +900,11 @@ body.title #titleMenu{display:flex;justify-content:space-between}
       </div>
     </div>
     <div class="cfgRow">
-      <div class="cfgLbl"><span>Volume de Efeitos e Cenas</span><small class="num" id="cfgVolTxt">100%</small></div>
+      <div class="cfgLbl"><span>Música</span><small class="num" id="cfgMusVolTxt">80%</small></div>
+      <input class="cfgVol" id="cfgMusVol" type="range" min="0" max="100" step="5" value="80">
+    </div>
+    <div class="cfgRow">
+      <div class="cfgLbl"><span>Efeitos e Cenas</span><small class="num" id="cfgVolTxt">100%</small></div>
       <input class="cfgVol" id="cfgVol" type="range" min="0" max="100" step="5" value="100">
     </div>
     <div class="cfgRow">
@@ -1753,9 +1759,10 @@ function mergeP(s){
   if(s.shop&&typeof s.shop==="object"&&Number(s.shop.day)>=((P.shop&&P.shop.day)||0))P.shop={day:Number(s.shop.day),ref:Math.min(3,Math.max(0,Math.floor(Number(s.shop.ref)||0))),bought:{...(s.shop.bought||{})}};
   if(Array.isArray(s.codes))P.codes=[...new Set([...P.codes,...s.codes.map(String)])];
   if(s.cfg&&typeof s.cfg==="object"){
-    if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"};
+    if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",introVid:"first",musicVol:0.8,sfxVol:1,fxq:"alto"};
     if(s.cfg.godVid==="always"||s.cfg.godVid==="first"||s.cfg.godVid==="off")P.cfg.godVid=s.cfg.godVid;
     if(s.cfg.introVid==="always"||s.cfg.introVid==="first"||s.cfg.introVid==="off")P.cfg.introVid=s.cfg.introVid;
+    if(s.cfg.musicVol!=null&&!isNaN(Number(s.cfg.musicVol)))P.cfg.musicVol=Math.max(0,Math.min(1,Number(s.cfg.musicVol)));
     if(s.cfg.sfxVol!=null&&!isNaN(Number(s.cfg.sfxVol)))P.cfg.sfxVol=Math.max(0,Math.min(1,Number(s.cfg.sfxVol)));if(s.cfg.fxq==="alto"||s.cfg.fxq==="medio"||s.cfg.fxq==="baixo")P.cfg.fxq=s.cfg.fxq;
   }
 }
@@ -2042,66 +2049,42 @@ function unlocksAt(l){
 
 /* ================= som e cenas de vídeo ================= */
 let AC=null,master=null,muted=false,NB=null,musicDucked=false;const lastS={};
-function getCfg(){if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",introVid:"first",sfxVol:1,fxq:"alto"};if(!["always","first","off"].includes(P.cfg.godVid))P.cfg.godVid="first";if(!["always","first","off"].includes(P.cfg.introVid))P.cfg.introVid="first";if(P.cfg.sfxVol==null||isNaN(P.cfg.sfxVol))P.cfg.sfxVol=1;if(!["alto","medio","baixo"].includes(P.cfg.fxq))P.cfg.fxq="alto";return P.cfg}
+function getCfg(){if(!P.cfg||typeof P.cfg!=="object")P.cfg={godVid:"first",introVid:"first",musicVol:0.8,sfxVol:1,fxq:"alto"};if(!["always","first","off"].includes(P.cfg.godVid))P.cfg.godVid="first";if(!["always","first","off"].includes(P.cfg.introVid))P.cfg.introVid="first";if(P.cfg.musicVol==null||isNaN(P.cfg.musicVol))P.cfg.musicVol=0.8;if(P.cfg.sfxVol==null||isNaN(P.cfg.sfxVol))P.cfg.sfxVol=1;if(!["alto","medio","baixo"].includes(P.cfg.fxq))P.cfg.fxq="alto";return P.cfg}
 function applyAudioVol(){
-  const vol=Math.max(0,Math.min(1,getCfg().sfxVol));
-  const duck=musicDucked?0.15:1;
-  if(master&&AC){
+  const cf=getCfg(),vol=Math.max(0,Math.min(1,cf.sfxVol)),mvol=Math.max(0,Math.min(1,cf.musicVol));
+  if(window.AUDIO){
+    window.AUDIO.setMuted(muted);
+    window.AUDIO.setMusicVol(mvol);
+    window.AUDIO.setSfxVol(vol);
+  }else if(master&&AC){
+    const duck=musicDucked?0.15:1;
     try{master.gain.setTargetAtTime(muted?0:0.3*vol*duck,AC.currentTime,0.05)}catch(e){master.gain.value=muted?0:0.3*vol*duck}
-  }
-  if(menuMusGain&&AC){
-    try{menuMusGain.gain.setTargetAtTime(muted?0:0.14*vol*duck,AC.currentTime,0.12)}catch(e){menuMusGain.gain.value=muted?0:0.14*vol*duck}
   }
   for(const vidId of["godVidEl","introVidEl"]){
     const ve=$(vidId);
     if(ve){ve.muted=!!muted;ve.volume=muted?0:vol}
   }
 }
-// Música ambiente suave do menu em Web Audio API (modo Dórico medieval)
-let menuMusTimer=0,menuMusGain=null,menuMusStep=0,menuMusOn=false;
-const MENU_NOTES=[293.66,349.23,440.00,329.63,261.63,329.63,392.00,349.23,293.66,440.00,523.25,440.00,392.00,349.23,329.63,293.66];
-function playMenuNote(){
-  if(!menuMusOn||!AC||muted||AC.state!=="running")return;
-  try{
-    if(!menuMusGain){menuMusGain=AC.createGain();menuMusGain.gain.value=0.14*getCfg().sfxVol*(musicDucked?0.15:1);menuMusGain.connect(AC.destination)}
-    const now=AC.currentTime,f=MENU_NOTES[menuMusStep%MENU_NOTES.length];
-    menuMusStep++;
-    const o=AC.createOscillator(),g=AC.createGain();
-    o.type="triangle";o.frequency.setValueAtTime(f,now);
-    g.gain.setValueAtTime(0.0001,now);
-    g.gain.linearRampToValueAtTime(0.28,now+0.08);
-    g.gain.exponentialRampToValueAtTime(0.0001,now+1.35);
-    o.connect(g);g.connect(menuMusGain);o.start(now);o.stop(now+1.4);
-    if(menuMusStep%4===1){
-      const b=AC.createOscillator(),bg=AC.createGain();
-      b.type="sine";b.frequency.setValueAtTime(f/2,now);
-      bg.gain.setValueAtTime(0.0001,now);
-      bg.gain.linearRampToValueAtTime(0.22,now+0.2);
-      bg.gain.exponentialRampToValueAtTime(0.0001,now+2.4);
-      b.connect(bg);bg.connect(menuMusGain);b.start(now);b.stop(now+2.45);
-    }
-  }catch(e){}
-}
-function startMenuMusic(){
-  if(menuMusOn)return;
-  menuMusOn=true;
-  playMenuNote();
-  clearInterval(menuMusTimer);
-  menuMusTimer=setInterval(playMenuNote,780);
-}
-function stopMenuMusic(){
-  menuMusOn=false;
-  clearInterval(menuMusTimer);menuMusTimer=0;
+function startMenuMusic(){if(window.AUDIO)window.AUDIO.playMusic("m_menu",1.2)}
+function stopMenuMusic(){}
+function battleMusicId(){
+  if(!G||!G.ph)return"m_menu";
+  if(G.ph.mode==="boss")return"m_chefe";
+  const th=G.ph.endless?BOSS_ORDER[Math.floor((Math.max(1,G.wave)-1)/5)%6]:G.ph.th;
+  return window.AUDIO?window.AUDIO.musicForTheme(th):"m_floresta";
 }
 function duckMusic(on){
   musicDucked=!!on;
+  if(window.AUDIO)window.AUDIO.duck(on,0.16);
   applyAudioVol();
-  document.querySelectorAll("audio").forEach(a=>{
-    if(on){if(a.dataset.origVol==null)a.dataset.origVol=String(a.volume);a.volume=Math.max(0,Number(a.dataset.origVol)*0.15)}
-    else if(a.dataset.origVol!=null){a.volume=Math.max(0,Math.min(1,Number(a.dataset.origVol)));delete a.dataset.origVol}
-  });
 }
 function audioOn(){
+  if(window.AUDIO){
+    AC=window.AUDIO.unlock();
+    master=window.AUDIO.getBus("sfx");
+    applyAudioVol();
+    return;
+  }
   if(muted)return;
   try{
     if(!AC){const K=window.AudioContext||window.webkitAudioContext;if(!K)return;AC=new K();master=AC.createGain();master.gain.value=0.3*getCfg().sfxVol*(musicDucked?0.15:1);master.connect(AC.destination)}
@@ -2125,6 +2108,7 @@ const GAP={arrow:70,slash:70,fire:90,ice:80,bolt:80,venom:90,dark:90,holy:90,pla
 function sfx(k){
   if(!AC||muted||AC.state!=="running")return;
   const now=performance.now();if(now-(lastS[k]||0)<(GAP[k]||0))return;lastS[k]=now;
+  if(window.AUDIO&&(k==="divine"||k==="rarity_s"||k==="rarity_l"||k==="roar"))window.AUDIO.duckPulse(k==="divine"?1600:950,0.22);
   try{switch(k){
     case"arrow":noise(0.09,0.25,2600);tone("triangle",900,500,0.06,0.08);break;
     case"slash":noise(0.07,0.3,1700);break;
@@ -2268,9 +2252,12 @@ function syncCfgUI(){
   document.querySelectorAll("#cfgVidSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.gv===cf.godVid));
   const ft=$("cfgFxTxt");if(ft)ft.textContent=FXQ.n;
   document.querySelectorAll("#cfgFxSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fq===cf.fxq));
-  const vr=$("cfgVol"),vt=$("cfgVolTxt");
+  const vr=$("cfgVol"),vt=$("cfgVolTxt"),mr=$("cfgMusVol"),mt=$("cfgMusVolTxt");
   if(vr)vr.value=String(Math.round(cf.sfxVol*100));
   if(vt)vt.textContent=Math.round(cf.sfxVol*100)+"%";
+  if(mr)mr.value=String(Math.round(cf.musicVol*100));
+  if(mt)mt.textContent=Math.round(cf.musicVol*100)+"%";
+  applyAudioVol();
   const cs=$("cfgSound");if(cs){cs.setAttribute("aria-pressed",!muted);cs.textContent=muted?"Som: Mudo":"Som: Ligado"}
   const bk=getBackup(),bki=$("cfgBkInfo"),bkb=$("cfgRestoreBk");
   if(bki&&bkb){
@@ -2308,6 +2295,7 @@ document.querySelectorAll("#cfgFxSeg button").forEach(b=>{
   b.onclick=()=>{getCfg().fxq=b.dataset.fq;applyFxq();persist();syncCfgUI();sfx("summon")};
 });
 $("cfgVol").oninput=e=>{getCfg().sfxVol=Math.max(0,Math.min(1,Number(e.target.value)/100));applyAudioVol();persist();syncCfgUI()};
+$("cfgMusVol").oninput=e=>{getCfg().musicVol=Math.max(0,Math.min(1,Number(e.target.value)/100));applyAudioVol();persist();syncCfgUI()};
 $("cfgSound").onclick=toggleSound;
 syncCfgUI();
 
@@ -2676,6 +2664,10 @@ function startWave(early){
   G.started=true;G.angel=0;G.celRev=0;const w=G.next||genWave(G.wave);G.queue=w.list.map(e=>({...e}));G.next=null;G.waveT=0;G.waveN=G.queue.length;G.inWave=true;sfx("wave");
   for(const u of [...G.units])if(!u.minion&&!u.down){u.rebirth=0;u.revivedWave=0;u.healBudget=u.mhp*HEAL_CAP_PER_SEC;const ab=ABIL[u.cls];if(ab&&ab.minion)spawnMinion(u);else if(ab&&ab.trap&&!G.traps.some(t=>t.owner===u))plantTrap(u)}
   const boss=G.queue.some(e=>e.k==="boss");
+  if(window.AUDIO){
+    if(boss)window.AUDIO.playMusic("m_chefe",1.5);
+    else if(G.ph.endless)window.AUDIO.playMusic(battleMusicId(),1.5);
+  }
   G.banner={txt:boss?bossFor(G.wave)[1]+"!":w.pat==="enxame"?"Enxame!":"Onda "+G.wave,t:1.3,col:boss?"#ff7a5c":"#ffe9a3"};
   if(!P.tut){P.tut=1;persist()}
   sel=null;ui();
@@ -2775,7 +2767,7 @@ function hurt(e,amt,srcU,noExp){
     e.hp=0;G.floats.push({x:e.x,y:e.y-0.45,t:0.8,txt:"EXECUTADO!",col:"#d79bff"});
   }
   if(e.hp<=0){
-    e.dead=true;sfx("death");puff(e.x,e.y,e.boss?26:10,"#cfc7b0",e.boss?2.6:1.8,0.5,0.07);if(e.boss){G.shake=0.35;track("bossKills")}
+    e.dead=true;sfx("death");puff(e.x,e.y,e.boss?26:10,"#cfc7b0",e.boss?2.6:1.8,0.5,0.07);if(e.boss){G.shake=0.35;track("bossKills");if(window.AUDIO&&!G.over&&G.ph.mode!=="boss"&&!G.enemies.some(o=>o!==e&&!o.dead&&o.boss))window.AUDIO.playMusic(battleMusicId(),1.5)}
     if(e.boss&&!G.ph.mode){const bth=G.ph.endless?BOSS_ORDER[Math.floor((G.wave-1)/5)%6]:G.ph.th;if(!P.bosses[bth]){P.bosses[bth]=1;P.gems+=15;G.gems=(G.gems||0)+15;persist();G.floats.push({x:e.x,y:e.y-0.55,t:1.2,txt:"+15 gemas",col:"#d79bff"});toast("Chefe derrotado pela 1ª vez!",BOSS[bth][1]+" · +15 gemas")}}
     const g=e.gold+e.bonus;G.gold+=g;G.floats.push({x:e.x,y:e.y,t:0.8,txt:"+"+g,col:"#ffd24a"});
     G.mana=Math.min(100,G.mana+(e.boss?30:e.k==="m"?1.5:4));G.kills++;
@@ -3252,6 +3244,7 @@ function finishChallenge(won){
   P.xp+=gain;persist(true);
   const after=plvl(),unl=[];for(let l=before+1;l<=after;l++)unl.push(...unlocksAt(l));
   sfx(won?"win":"over");
+  if(window.AUDIO)window.AUDIO.playJingle(won?"j_vitoria":"j_derrota","m_menu");
   $("oTitle").textContent=won?(m==="weekly"&&ph.step<2?"Etapa concluída!":"Desafio vencido!"):(m==="onehp"?"1 PV perdido":"Derrota no desafio");
   const os=$("oStars");os.textContent="";
   if(won&&medal>0){const sp=document.createElement("span");sp.textContent=MEDALS[medal].ico+" "+MEDALS[medal].n;sp.style.fontSize="24px";sp.style.letterSpacing="1px";os.appendChild(sp)}
@@ -3318,6 +3311,7 @@ function finish(won){
   P.xp+=gain;persist(true);
   const after=plvl(),unl=[];for(let l=before+1;l<=after;l++)unl.push(...unlocksAt(l));
   sfx(won?"win":"over");
+  if(window.AUDIO)window.AUDIO.playJingle(won?"j_vitoria":"j_derrota","m_menu");
   $("oTitle").textContent=won?"Fase concluída":endless?"A fenda venceu":"A muralha caiu";
   const os=$("oStars");os.textContent="";if(won&&!endless)for(let i=0;i<3;i++){const s=document.createElement(i<stars?"span":"s");s.textContent="★";os.appendChild(s)}
   $("oText").textContent=(won?ph.n+" com a muralha em "+castle+"%. ":endless?"Você resistiu até a onda "+G.wave+". Recorde: onda "+P.best+". Semente "+G.seed+". ":"Derrota na onda "+G.wave+" de "+ph.waves+". ")+"+"+gain+" XP.";
@@ -3817,18 +3811,25 @@ function artKey(c,rar){
   return c.id+"b";
 }
 const EART={g:"e_g",r:"e_r",m:"e_r",b:"e_b",a:"e_a",boss:"e_a",l:"e_l",h:"e_h",s:"e_s",f:"e_f"};
-// Atlas de animação quadro a quadro dos inimigos (carregados 1x; sem alocação por frame)
+// Atlas de animação quadro a quadro dos inimigos (carregados 1x; funciona em file:// e HTTP/PWA)
 const ENEMY_ANIM={};
 (function loadEnemyAnims(){
+  const registerMeta=(eid,st,meta)=>{
+    if(!meta||!meta.image||!Array.isArray(meta.frames)||!meta.frames.length)return;
+    const im=new Image();
+    const entry={img:im,meta,ready:false};
+    (ENEMY_ANIM[eid]||(ENEMY_ANIM[eid]={}))[st]=entry;
+    im.onload=()=>{entry.ready=true};
+    im.src=meta.image;
+  };
+  if(window.ENEMY_ANIM_META&&typeof window.ENEMY_ANIM_META==="object"){
+    for(const eid in window.ENEMY_ANIM_META){
+      for(const st in window.ENEMY_ANIM_META[eid])registerMeta(eid,st,window.ENEMY_ANIM_META[eid][st]);
+    }
+    return;
+  }
   const loadPack=(eid,st,jsonUrl)=>{
-    fetch(jsonUrl).then(r=>r.ok?r.json():null).then(meta=>{
-      if(!meta||!meta.image||!Array.isArray(meta.frames)||!meta.frames.length)return;
-      const im=new Image();
-      const entry={img:im,meta,ready:false};
-      (ENEMY_ANIM[eid]||(ENEMY_ANIM[eid]={}))[st]=entry;
-      im.onload=()=>{entry.ready=true};
-      im.src=meta.image;
-    }).catch(()=>{});
+    fetch(jsonUrl).then(r=>r.ok?r.json():null).then(meta=>registerMeta(eid,st,meta)).catch(()=>{});
   };
   fetch("img/anim/index.json").then(r=>r.ok?r.json():null).catch(()=>null).then(idx=>{
     const map=idx||{e_g:{walk:"img/anim/e_g_walk.json",atk:"img/anim/e_g_atk.json"}};
@@ -6215,6 +6216,7 @@ function startPhase(spec,snap){
   }
   stopMenuMusic();
   G=fresh(sp);sel=null;drag=null;SPR.clear();
+  if(window.AUDIO)window.AUDIO.playMusic(battleMusicId(),1.2);
   $("menuBg").classList.remove("in");
   document.body.className="game";
   if(snap){G.gold=Number(snap.gold)||0;G.lives=Number(snap.lives)||G.maxLives;G.wave=Number(snap.wave)||1;G.summons=Number(snap.summons)||0;G.xp=Number(snap.xp)||0;G.seed=Number(snap.seed)||G.seed;for(const u of snap.units||[])if(C[u.c]&&u.col>=0&&u.col<LANES&&u.r>=0&&u.r<FROWS&&!unitAt(u.col,u.r)){const r2=(u.rar&&RAR[u.rar])?u.rar:"C",lf2=u.rar?(Number(u.lvf)||1):1;addUnit(u.c,u.col,u.r,r2,lf2)}}
@@ -6350,6 +6352,7 @@ function showGodReveal(c,opts){
   for(const tm of godRevTimers)clearTimeout(tm);godRevTimers=[];
   godRevPrevPause=!!(opts.replay&&G&&G.paused);
   if(G&&!opts.replay)G.paused=true;
+  duckMusic(true);
   ov.classList.remove("burst","show");
   ov.classList.add("on","sil");
   $("grTitle").textContent=opts.replay?"✦ REVER DESPERTAR ✦":"NOVO DEUS DESPERTOU!";
@@ -6366,6 +6369,7 @@ function showGodReveal(c,opts){
 $("grOk").onclick=()=>{
   for(const tm of godRevTimers)clearTimeout(tm);godRevTimers=[];
   $("godReveal").classList.remove("on","sil","burst","show");
+  duckMusic(false);
   if(G&&!G.over&&!godRevPrevPause)G.paused=false;
 };
 function showRealmUnlock(entry,freeCards){
@@ -6396,10 +6400,11 @@ function showRealmUnlock(entry,freeCards){
     gifts.appendChild(row);
   }
   sfx("discover");
+  duckMusic(true);
   ov.classList.add("on");
 }
-$("suOk").onclick=()=>$("schUnlock").classList.remove("on");
-$("schUnlock").onclick=e=>{if(e.target===$("schUnlock"))$("schUnlock").classList.remove("on")};
+$("suOk").onclick=()=>{$("schUnlock").classList.remove("on");duckMusic(false)};
+$("schUnlock").onclick=e=>{if(e.target===$("schUnlock")){$("schUnlock").classList.remove("on");duckMusic(false)}};
 $("bWave").onclick=()=>startWave(true);
 $("bSpeed").onclick=e=>{if(!G)return;G.speed=G.speed===1?2:1;e.currentTarget.textContent="Velocidade "+G.speed+"×";e.currentTarget.setAttribute("aria-pressed",G.speed===2)};
 $("bMap").onclick=()=>{if(!G||G.over)return;G.paused=true;$("pause").classList.add("on")};
@@ -6512,7 +6517,7 @@ function openTitleMenu(){
   showMenuBg(true);
   updateTitleUserUI();
   setCloudBadge(cloudState);
-  startMenuMusic();
+  if(window.AUDIO)window.AUDIO.playMusic("m_titulo",1.2);
   if(typeof maybeShowDlSuggest==="function")maybeShowDlSuggest();
 }
 function openLoginScreen(msg){
@@ -6520,6 +6525,7 @@ function openLoginScreen(msg){
   document.body.className="login";
   applyMenuTabBg("");
   showMenuBg(true);
+  if(window.AUDIO)window.AUDIO.playMusic("m_titulo",1.2);
   if($("loginMsg"))$("loginMsg").textContent=msg||"";
 }
 function openSaveConflict(localObj,localMs,cloudObj,cloudMs){

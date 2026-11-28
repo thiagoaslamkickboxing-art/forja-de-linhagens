@@ -1,5 +1,5 @@
 ﻿// Aumente o numero da versao ao publicar uma nova atualizacao do jogo
-const CACHE_VERSION = "forja-de-linhagens-v8";
+const CACHE_VERSION = "forja-de-linhagens-v10";
 const PACK_CACHE_ESS = "forja-pack-essential";
 const PACK_CACHE_CMP = "forja-pack-complete";
 const VIDEO_CACHE = "forja-de-linhagens-videos-v1";
@@ -8,6 +8,8 @@ const KEEP_CACHES = new Set([CACHE_VERSION, PACK_CACHE_ESS, PACK_CACHE_CMP, VIDE
 const CORE_ASSETS = [
   "./",
   "./index.html",
+  "./audio-manager.js",
+  "./img/anim/manifest.js",
   "./asset-manager.js",
   "./firebase-cloud.js",
   "./manifest.webmanifest"
@@ -446,9 +448,9 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Videos (intro e Deuses): cache-first nos pacotes/VIDEO_CACHE (se ja baixado toca instantaneo),
-  // senao carrega sob demanda da rede sem bloquear
-  if (url.pathname.includes("/videos/") || url.pathname.includes("/video/")) {
+  // Videos (intro e Deuses) e Musicas (.m4a): cache-first nos pacotes se baixado,
+  // senao carrega sob demanda (streaming) da rede sem bloquear
+  if (url.pathname.includes("/videos/") || url.pathname.includes("/video/") || url.pathname.includes("/music/")) {
     event.respondWith(
       matchFromPacks(req).then(hit => hit || fetch(req))
     );
@@ -456,7 +458,7 @@ self.addEventListener("fetch", event => {
   }
 
   // Navegacao / index.html / scripts / manifest: rede primeiro (atualiza cache), fallback para cache offline
-  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/asset-manager.js") || url.pathname.endsWith("/firebase-cloud.js") || url.pathname.endsWith("/manifest.webmanifest")) {
+  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/audio-manager.js") || url.pathname.endsWith("/asset-manager.js") || url.pathname.endsWith("/firebase-cloud.js") || url.pathname.endsWith("/manifest.webmanifest")) {
     event.respondWith(
       fetch(req)
         .then(res => {

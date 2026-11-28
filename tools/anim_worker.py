@@ -597,9 +597,10 @@ def main():
     for (eid, state), (path, kind) in sources:
         process_one(eid, state, path, kind)
 
-    # Gera img/anim/index.json com todos os atlas existentes para descoberta automática no jogo
+    # Gera img/anim/index.json e img/anim/manifest.js (funciona tanto em file:// quanto em HTTP/PWA)
     if OUT_DIR.exists():
         idx_map = {}
+        full_meta = {}
         pat_j = re.compile(r"^(e_[a-zA-Z0-9]+)_(walk|atk)\.json$")
         for jf in sorted(OUT_DIR.glob("*.json")):
             if jf.name == "index.json":
@@ -609,8 +610,16 @@ def main():
                 continue
             eid, st = m.group(1), m.group(2)
             idx_map.setdefault(eid, {})[st] = f"img/anim/{jf.name}"
+            try:
+                full_meta.setdefault(eid, {})[st] = json.loads(jf.read_text(encoding="utf-8"))
+            except Exception:
+                pass
         (OUT_DIR / "index.json").write_text(json.dumps(idx_map, indent=2), encoding="utf-8")
-        print(f"Indice atualizado: img/anim/index.json ({len(idx_map)} inimigo(s))")
+        (OUT_DIR / "manifest.js").write_text(
+            "window.ENEMY_ANIM_META=" + json.dumps(full_meta, separators=(",", ":")) + ";\n",
+            encoding="utf-8",
+        )
+        print(f"Indices atualizados: img/anim/index.json + img/anim/manifest.js ({len(idx_map)} inimigo(s))")
 
     print("Concluido!")
     return 0
