@@ -12,6 +12,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
 <link rel="apple-touch-icon" href="img/icon-192.png">
 <title>Forja de Linhagens</title>
+<script src="asset-manager.js"></script>
 <script type="module" src="firebase-cloud.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -592,6 +593,23 @@ body.title #titleMenu{display:flex;justify-content:space-between}
 .credBody small{color:var(--dim)}
 .cfgBkRow{padding:10px;border-radius:6px;background:var(--moss2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .cfgBkRow small{font-size:12px;color:var(--dim)}
+#essLoadOv{position:fixed;inset:0;z-index:134;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:rgba(8,14,12,.92);backdrop-filter:blur(6px)}
+#essLoadOv.on{display:flex}
+.essCard{width:min(360px,100%);padding:22px 18px;border-radius:12px;background:var(--moss);border:1.5px solid var(--gold);box-shadow:0 12px 34px #000a;display:flex;flex-direction:column;gap:12px}
+.essCard h2{font-family:var(--display);font-size:24px;color:var(--gold)}
+.dlBar{width:100%;height:10px;border-radius:99px;background:#0a120f;overflow:hidden;border:1px solid var(--line)}
+.dlBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e4b548,#86d957);transition:width .18s ease}
+.dlMeta{display:flex;justify-content:space-between;font-size:12px;color:var(--dim)}
+.dlBox{padding:10px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.dlStat{padding:10px 12px;border-radius:8px;background:var(--moss2);border:1px solid var(--line);font-size:13px;line-height:1.45;color:var(--parch)}
+.dlStat small{display:block;color:var(--dim);font-size:12px}
+.dlChk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--parch);cursor:pointer}
+.dlChk input{width:16px;height:16px;accent-color:var(--gold)}
+.dlBtns{display:flex;gap:8px;flex-wrap:wrap}
+.dlBtns .btn{flex:1;min-width:110px}
+.tmSuggest{width:min(340px,100%);padding:10px 12px;border-radius:10px;background:rgba(24,42,36,.92);border:1px solid var(--gold);display:flex;align-items:center;gap:10px;text-align:left;font-size:13px;box-shadow:0 6px 18px #0008}
+.tmSuggest b{color:var(--gold);display:block;font-size:13px}
+.tmSuggest small{color:var(--dim);font-size:11.5px}
 </style>
 </head>
 <body class="home">
@@ -614,6 +632,16 @@ body.title #titleMenu{display:flex;justify-content:space-between}
 <div id="introVidOv" aria-modal="true" role="dialog">
   <video id="introVidEl" playsinline webkit-playsinline preload="none"></video>
   <button class="btn" id="introVidSkip" type="button">Pular ▸▸</button>
+</div>
+
+<div id="essLoadOv" aria-modal="true" role="dialog">
+  <div class="essCard">
+    <h2>Baixando recursos essenciais</h2>
+    <div style="font-size:13px;color:var(--dim)" id="essLoadSub">Preparando o jogo para abrir sem esperas...</div>
+    <div class="dlBar"><i id="essLoadBar"></i></div>
+    <div class="dlMeta"><span id="essLoadMb" class="num">0,0 MB / 0,0 MB</span><b id="essLoadPct" class="num">0%</b></div>
+    <button type="button" class="btn" id="essLoadSkip">Continuar sem esperar</button>
+  </div>
 </div>
 
 <section id="loginScr">
@@ -648,6 +676,11 @@ body.title #titleMenu{display:flex;justify-content:space-between}
       <button type="button" class="btn" id="tmAcct">Conta</button>
       <button type="button" class="btn" id="tmCfg">Configurações</button>
       <button type="button" class="btn" id="tmCred">Créditos</button>
+    </div>
+    <div class="tmSuggest" id="tmDlSuggest" hidden>
+      <div style="flex:1;min-width:0"><b>Jogar 100% offline e sem esperas?</b><small id="tmDlSugTxt">Baixe todos os recursos no Wi-Fi.</small></div>
+      <button type="button" class="btn go" id="tmDlSugGo" style="padding:7px 10px;font-size:12px">Baixar</button>
+      <button type="button" class="btn" id="tmDlSugNo" aria-label="Dispensar" style="padding:7px 9px;font-size:12px">✕</button>
     </div>
   </div>
   <div class="tmFoot">Forja de Linhagens · PWA</div>
@@ -878,10 +911,39 @@ body.title #titleMenu{display:flex;justify-content:space-between}
     </div>
     <button class="btn" id="cfgSound" aria-pressed="true">Som: Ligado</button>
     <div class="cfgBkRow">
+      <div class="cfgLbl"><span>Recursos offline</span><small class="num" id="cfgAssetVer">v—</small></div>
+      <small id="cfgAssetInfo">Verificando armazenamento...</small>
+      <div class="dlBtns">
+        <button type="button" class="btn go" id="cfgOpenDl">Baixar recursos</button>
+        <button type="button" class="btn" id="cfgClearAssets" style="border-color:#d0604a;color:#ffb8a8">Limpar recursos baixados</button>
+      </div>
+    </div>
+    <div class="cfgBkRow">
       <div class="cfgLbl"><span>Backup local de segurança</span></div>
       <small id="cfgBkInfo">Nenhum backup salvo ainda.</small>
       <button type="button" class="btn" id="cfgRestoreBk" disabled>Restaurar backup</button>
     </div>
+  </div>
+</div></div>
+
+<div class="sheet" id="dlModal"><div class="panel">
+  <header><h2>Baixar recursos</h2><button class="btn" id="dlClose">Fechar</button></header>
+  <div class="dlBox">
+    <div class="dlStat">
+      <div id="dlSummary">Calculando pacotes...</div>
+      <small id="dlStorage">Armazenamento: —</small>
+      <small id="dlVersion">Versão dos recursos: —</small>
+    </div>
+    <label class="dlChk"><input type="checkbox" id="dlAllowMobile"><span>Permitir download em dados móveis (padrão: apenas Wi-Fi)</span></label>
+    <div class="dlBar"><i id="dlProgBar"></i></div>
+    <div class="dlMeta"><span id="dlProgMb" class="num">0,0 MB / 0,0 MB</span><b id="dlProgPct" class="num">0%</b></div>
+    <div class="dlBtns">
+      <button type="button" class="btn go" id="dlStartAll">Baixar tudo</button>
+      <button type="button" class="btn" id="dlPause" hidden>Pausar</button>
+      <button type="button" class="btn" id="dlCancel" hidden style="border-color:#d0604a;color:#ffb8a8">Cancelar</button>
+    </div>
+    <button type="button" class="btn" id="dlClear" style="border-color:#d0604a;color:#ffb8a8">Limpar recursos baixados (mantém save)</button>
+    <div class="authMsg" id="dlMsg" role="status"></div>
   </div>
 </div></div>
 
@@ -2173,6 +2235,7 @@ function syncCfgUI(){
       bkb.disabled=true;
     }
   }
+  if(typeof refreshCfgAssetsInfo==="function")refreshCfgAssetsInfo();
 }
 function openCfg(){syncCfgUI();$("cfg").classList.add("on")}
 $("hCfg").onclick=openCfg;
@@ -6336,6 +6399,7 @@ function openTitleMenu(){
   updateTitleUserUI();
   setCloudBadge(cloudState);
   startMenuMusic();
+  if(typeof maybeShowDlSuggest==="function")maybeShowDlSuggest();
 }
 function openLoginScreen(msg){
   G=null;sel=null;
@@ -6474,7 +6538,9 @@ function onSplashTap(){
   splashTriggered=true;
   audioOn();
   sfx("summon");
-  playIntroVideo(()=>{proceedAfterIntro()});
+  playIntroVideo(()=>{
+    ensureEssentialAssets().then(()=>proceedAfterIntro());
+  });
 }
 $("splashScr").addEventListener("click",onSplashTap);
 $("splashScr").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onSplashTap()}});
@@ -6571,6 +6637,146 @@ $("bLogout").onclick=async()=>{
   $("acct").classList.remove("on");
   openLoginScreen("Sessão encerrada.");
 };
+
+/* ================= download de pacotes de recursos (Essencial / Completo) ================= */
+function currentRealmTheme(){
+  let idx=0;
+  for(let r=REALMS.length-1;r>=0;r--)if(isStageOpen(r,1,false)){idx=r;break}
+  return (REALMS[idx]&&REALMS[idx].th)||"forest";
+}
+async function ensureEssentialAssets(){
+  const A=window.ASSETS;
+  if(!A||!navigator.onLine)return;
+  const chk=A.canDownloadNow();
+  if(!chk.ok)return; // Em dados móveis sem permissão ou offline, não trava a abertura
+  const st=await A.inspectStatus(currentRealmTheme());
+  if(!st.ready||!st.essMissing.length)return;
+  const ov=$("essLoadOv"),bar=$("essLoadBar"),mb=$("essLoadMb"),pct=$("essLoadPct"),skip=$("essLoadSkip"),sub=$("essLoadSub");
+  if(!ov)return;
+  ov.classList.add("on");
+  sub.textContent="Baixando "+st.essMissing.length+" arquivos essenciais ("+A.fmtMB(st.essTotal-st.essDone)+")...";
+  let skipped=false;
+  skip.onclick=()=>{
+    skipped=true;
+    const j=A.getActiveJob();if(j)j.cancel();
+    ov.classList.remove("on");
+  };
+  await A.downloadPack("essential",{
+    currentRealmTheme:currentRealmTheme(),
+    onProgress:p=>{
+      if(skipped)return;
+      if(bar)bar.style.width=p.pct+"%";
+      if(mb)mb.textContent=A.fmtMB(p.doneBytes)+" / "+A.fmtMB(p.totalBytes);
+      if(pct)pct.textContent=p.pct+"%";
+    }
+  });
+  ov.classList.remove("on");
+}
+async function refreshCfgAssetsInfo(){
+  const A=window.ASSETS;if(!A)return;
+  const verEl=$("cfgAssetVer"),infEl=$("cfgAssetInfo");
+  const[st,stor]=await Promise.all([A.inspectStatus(currentRealmTheme()),A.getStorageInfo()]);
+  if(verEl)verEl.textContent="v"+st.version;
+  if(infEl){
+    const pct=st.allTotal>0?Math.round(st.allDone/st.allTotal*100):0;
+    const used=stor.usage?A.fmtMB(stor.usage):A.fmtMB(st.allDone);
+    infEl.textContent="Baixado: "+A.fmtMB(st.allDone)+" / "+A.fmtMB(st.allTotal)+" ("+pct+"%) · Espaço usado: "+used+(stor.persisted?" · Protegido ✓":"");
+  }
+}
+async function maybeShowDlSuggest(){
+  const A=window.ASSETS,box=$("tmDlSuggest");
+  if(!A||!box)return;
+  let seen=false;try{seen=!!localStorage.getItem(A.LS_SUGGEST_SEEN)}catch(e){}
+  if(seen){box.hidden=true;return}
+  const st=await A.inspectStatus(currentRealmTheme());
+  if(!st.ready||!st.allMissing.length){box.hidden=true;return}
+  const rem=st.allTotal-st.allDone;
+  $("tmDlSugTxt").textContent="Baixe o pacote completo (~"+A.fmtMB(rem)+") no Wi-Fi para vídeos e artes sem espera.";
+  box.hidden=false;
+}
+async function refreshDlModal(){
+  const A=window.ASSETS;if(!A)return;
+  const[st,stor]=await Promise.all([A.inspectStatus(currentRealmTheme()),A.getStorageInfo()]);
+  $("dlAllowMobile").checked=A.getAllowMobile();
+  const pct=st.allTotal>0?Math.round(st.allDone/st.allTotal*100):0;
+  $("dlSummary").textContent="Baixado: "+A.fmtMB(st.allDone)+" de "+A.fmtMB(st.allTotal)+" ("+pct+"%) · Essencial: "+A.fmtMB(st.essDone)+"/"+A.fmtMB(st.essTotal);
+  const qTxt=stor.quota?(" de "+A.fmtMB(stor.quota)):"";
+  $("dlStorage").textContent="Espaço usado no aparelho: "+A.fmtMB(stor.usage||st.allDone)+qTxt+(stor.persisted?" · Armazenamento persistente ✓":"");
+  $("dlVersion").textContent="Versão dos recursos: v"+st.version;
+  $("dlProgBar").style.width=pct+"%";
+  $("dlProgMb").textContent=A.fmtMB(st.allDone)+" / "+A.fmtMB(st.allTotal);
+  $("dlProgPct").textContent=pct+"%";
+  const rem=Math.max(0,st.allTotal-st.allDone);
+  const startBtn=$("dlStartAll");
+  if(rem<=0){startBtn.textContent="Tudo baixado ✓";startBtn.disabled=true}
+  else{startBtn.textContent="Baixar tudo (~"+A.fmtMB(rem)+")";startBtn.disabled=false}
+}
+function openDlModal(){
+  if($("dlMsg"))$("dlMsg").textContent="";
+  $("dlModal").classList.add("on");
+  refreshDlModal();
+}
+$("cfgOpenDl").onclick=()=>{$("cfg").classList.remove("on");openDlModal()};
+$("tmDlSugGo").onclick=()=>{
+  try{localStorage.setItem(window.ASSETS.LS_SUGGEST_SEEN,"1")}catch(e){}
+  $("tmDlSuggest").hidden=true;openDlModal();
+};
+$("tmDlSugNo").onclick=()=>{
+  try{localStorage.setItem(window.ASSETS.LS_SUGGEST_SEEN,"1")}catch(e){}
+  $("tmDlSuggest").hidden=true;
+};
+$("dlClose").onclick=()=>$("dlModal").classList.remove("on");
+$("dlModal").onclick=e=>{if(e.target===$("dlModal"))$("dlModal").classList.remove("on")};
+$("dlAllowMobile").onchange=e=>{if(window.ASSETS)window.ASSETS.setAllowMobile(!!e.target.checked)};
+$("dlStartAll").onclick=async()=>{
+  const A=window.ASSETS;if(!A)return;
+  const msg=$("dlMsg"),startBtn=$("dlStartAll"),pauseBtn=$("dlPause"),cancelBtn=$("dlCancel");
+  const chk=A.canDownloadNow();
+  if(!chk.ok){
+    msg.textContent=chk.reason==="cellular"?"Você está em dados móveis. Conecte ao Wi-Fi ou marque 'Permitir download em dados móveis'.":"Sem conexão com a internet.";
+    sfx("no");return;
+  }
+  msg.textContent="Baixando recursos em lotes de 4...";
+  startBtn.disabled=true;pauseBtn.hidden=false;pauseBtn.textContent="Pausar";cancelBtn.hidden=false;
+  const res=await A.downloadPack("all",{
+    forceManifest:true,
+    currentRealmTheme:currentRealmTheme(),
+    onProgress:p=>{
+      $("dlProgBar").style.width=p.pct+"%";
+      $("dlProgMb").textContent=A.fmtMB(p.doneBytes)+" / "+A.fmtMB(p.totalBytes);
+      $("dlProgPct").textContent=p.pct+"%";
+      if(p.status==="paused")msg.textContent="Download pausado.";
+      else if(p.status==="running")msg.textContent="Baixando ("+p.doneFiles+"/"+p.totalFiles+")...";
+    }
+  });
+  pauseBtn.hidden=true;cancelBtn.hidden=true;
+  if(res.ok){msg.textContent="Todos os recursos foram baixados! Pronto para jogar offline.";sfx("win")}
+  else if(res.reason==="cancelled"){msg.textContent="Download cancelado."}
+  else if(res.reason==="partial"){msg.textContent="Concluído com "+res.failed+" falha(s). Toque em Baixar tudo para tentar novamente."}
+  else{msg.textContent="Não foi possível concluir o download."}
+  await refreshDlModal();
+  refreshCfgAssetsInfo();
+};
+$("dlPause").onclick=()=>{
+  const j=window.ASSETS&&window.ASSETS.getActiveJob();if(!j)return;
+  if(j.isPaused()){j.resume();$("dlPause").textContent="Pausar"}
+  else{j.pause();$("dlPause").textContent="Retomar"}
+};
+$("dlCancel").onclick=()=>{
+  const j=window.ASSETS&&window.ASSETS.getActiveJob();if(j)j.cancel();
+};
+async function doClearAssets(){
+  if(!window.ASSETS)return;
+  if(!confirm("Limpar todos os recursos baixados (imagens em cache e vídeos)? Seu progresso (save) será mantido intacto."))return;
+  await window.ASSETS.clearDownloadedAssets();
+  sfx("no");
+  if($("dlMsg"))$("dlMsg").textContent="Recursos baixados removidos. Seu save foi mantido.";
+  hToast("Recursos baixados limpos (save mantido).");
+  await refreshDlModal();
+  refreshCfgAssetsInfo();
+}
+$("dlClear").onclick=doClearAssets;
+$("cfgClearAssets").onclick=doClearAssets;
 
 function start(data){
   const qGod=new URLSearchParams(location.search).get("god");

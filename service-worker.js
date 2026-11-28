@@ -1,10 +1,14 @@
 ﻿// Aumente o numero da versao ao publicar uma nova atualizacao do jogo
-const CACHE_VERSION = "forja-de-linhagens-v7";
+const CACHE_VERSION = "forja-de-linhagens-v8";
+const PACK_CACHE_ESS = "forja-pack-essential";
+const PACK_CACHE_CMP = "forja-pack-complete";
 const VIDEO_CACHE = "forja-de-linhagens-videos-v1";
+const KEEP_CACHES = new Set([CACHE_VERSION, PACK_CACHE_ESS, PACK_CACHE_CMP, VIDEO_CACHE]);
 
 const CORE_ASSETS = [
   "./",
   "./index.html",
+  "./asset-manager.js",
   "./firebase-cloud.js",
   "./manifest.webmanifest"
 ];
@@ -395,24 +399,28 @@ const ALL_ASSETS = [...CORE_ASSETS, ...IMG_ASSETS];
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then(async cache => {
-      await cache.addAll(CORE_ASSETS);
-      // Pre-carrega todas as imagens de img/ em lotes para instalacao offline confiavel
-      const batch = 20;
-      for (let i = 0; i < IMG_ASSETS.length; i += batch) {
-        await Promise.allSettled(IMG_ASSETS.slice(i, i + batch).map(url => cache.add(url)));
-      }
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_VERSION)
+      .then(cache => cache.addAll(CORE_ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION && k !== VIDEO_CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => !KEEP_CACHES.has(k)).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
+
+async function matchFromPacks(req) {
+  for (const name of [PACK_CACHE_ESS, PACK_CACHE_CMP, VIDEO_CACHE, CACHE_VERSION]) {
+    const c = await caches.open(name);
+    const hit = await c.match(req, { ignoreSearch: true });
+    if (hit) return hit;
+  }
+  return null;
+}
 
 self.addEventListener("fetch", event => {
   const req = event.request;
@@ -422,19 +430,33 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/__/auth/") || url.pathname.startsWith("/__/firebase/")) return;
 
-  // Videos (intro e Deuses): nunca pre-carregados nem gravados automaticamente no fetch;
-  // usa VIDEO_CACHE apenas se ja tiver sido assistido e salvo pela pagina
-  if (url.pathname.includes("/videos/") || url.pathname.includes("/video/")) {
+  // asset-manifest.json: sempre tenta rede primeiro para detectar atualizacoes de hash; fallback cache
+  if (url.pathname.endsWith("/asset-manifest.json")) {
     event.respondWith(
-      caches.open(VIDEO_CACHE).then(cache =>
-        cache.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req))
-      )
+      fetch(req)
+        .then(res => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(PACK_CACHE_ESS).then(c => c.put("./asset-manifest.json", copy));
+          }
+          return res;
+        })
+        .catch(() => matchFromPacks(req))
     );
     return;
   }
 
-  // Navegacao / index.html / firebase-cloud.js / manifest: rede primeiro (atualiza cache), fallback para cache offline
-  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/firebase-cloud.js") || url.pathname.endsWith("/manifest.webmanifest")) {
+  // Videos (intro e Deuses): cache-first nos pacotes/VIDEO_CACHE (se ja baixado toca instantaneo),
+  // senao carrega sob demanda da rede sem bloquear
+  if (url.pathname.includes("/videos/") || url.pathname.includes("/video/")) {
+    event.respondWith(
+      matchFromPacks(req).then(hit => hit || fetch(req))
+    );
+    return;
+  }
+
+  // Navegacao / index.html / scripts / manifest: rede primeiro (atualiza cache), fallback para cache offline
+  if (req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html") || url.pathname.endsWith("/asset-manager.js") || url.pathname.endsWith("/firebase-cloud.js") || url.pathname.endsWith("/manifest.webmanifest")) {
     event.respondWith(
       fetch(req)
         .then(res => {
@@ -444,18 +466,19 @@ self.addEventListener("fetch", event => {
           }
           return res;
         })
-        .catch(() => caches.match(req).then(hit => hit || caches.match("./index.html")))
+        .catch(() => matchFromPacks(req).then(hit => hit || caches.match("./index.html")))
     );
     return;
   }
 
-  // Imagens e demais recursos locais: cache primeiro, com gravacao automatica em cache
+  // Demais recursos (img, fx, fundos, sfx): cache-first nos pacotes baixados, com fallback para rede
   event.respondWith(
-    caches.open(CACHE_VERSION).then(cache =>
-      cache.match(req).then(hit => hit || fetch(req).then(res => {
-        if (res && res.ok) cache.put(req, res.clone());
-        return res;
-      }))
-    )
+    matchFromPacks(req).then(hit => hit || fetch(req).then(res => {
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE_VERSION).then(c => c.put(req, copy));
+      }
+      return res;
+    }))
   );
 });
