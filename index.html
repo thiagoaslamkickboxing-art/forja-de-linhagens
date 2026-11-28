@@ -6422,7 +6422,7 @@ function playIntroVideo(onDone){
   ve.muted=!!muted;
   ve.volume=muted?0:Math.max(0,Math.min(1,getCfg().sfxVol));
   ve.currentTime=0;
-  ve.src="video/intro.mp4";
+  ve.src="videos/intro.mp4";
   ve.onplaying=()=>{started=true;clearTimeout(loadT)};
   ve.onended=done;
   ve.onerror=done;
